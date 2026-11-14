@@ -21,6 +21,7 @@ export function NewChat() {
   const [targetId, setTargetId] = useState<string | null>(null)
   const [projectId, setProjectId] = useState<string | null>(null)
   const [branch, setBranch] = useState(true)
+  const [autoApprove, setAutoApprove] = useState(false)
   const [status, setStatus] = useState('')
   const [selectedModel, setSelectedModel] = useState<string | null>(null)
   const [projectSearch, setProjectSearch] = useState('')
@@ -85,6 +86,7 @@ export function NewChat() {
 
   const pickedAgent = agents.find(a => a.id === targetId)
   const models = kind === 'agent' ? pickedAgent?.models || [] : []
+  const currentWorkflow = kind === 'workflow' ? workflows.find(w => w.id === targetId) : undefined
 
   useEffect(() => {
     if (models.length > 0) setSelectedModel('default')
@@ -236,6 +238,18 @@ export function NewChat() {
             <p className="text-xs text-muted-foreground">This project is not a git repository, so changes cannot be listed or undone.</p>
           ) : null}
 
+          {kind === 'workflow' && currentWorkflow?.hasApproval && (
+            <div className="flex items-start gap-3 rounded-xl border bg-card p-3">
+              <Switch id="auto-approve" checked={autoApprove} onCheckedChange={setAutoApprove} className="mt-0.5" />
+              <Label htmlFor="auto-approve" className="grid cursor-pointer gap-1 font-normal">
+                <span className="font-medium">Auto build</span>
+                <span className="text-xs leading-relaxed text-muted-foreground">
+                  Run the Build step without waiting for my approval.
+                </span>
+              </Label>
+            </div>
+          )}
+
           <p className="text-xs text-muted-foreground">Projects are found inside: {rootsText}. Add more roots in config.yaml.</p>
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
         </div>
@@ -253,7 +267,7 @@ export function NewChat() {
           if (useBranch) setStatus('Creating the branch…')
           try {
             const out = await post<{ id: number }>('/api/chats', {
-              ...(kind === 'workflow' ? { workflowId: targetId } : { agentId: targetId }),
+              ...(kind === 'workflow' ? { workflowId: targetId, autoApprove } : { agentId: targetId }),
               projectId, prompt: text, attachments, branch: useBranch,
               model: selectedModel || undefined,
             })

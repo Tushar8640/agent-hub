@@ -89,7 +89,7 @@ workflows:
           {input}
       - agent: antigravity
         label: Build
-        approve: true                      # pause: you read (and may edit) the plan, then press "Build"
+        approve: true                      # pause: you read (and may edit) the plan, then press "Build" (can be skipped per chat with the "Auto build" switch in the app)
         prompt: |
           Implement the following plan in this project. Follow it step by step, keep changes minimal and do not
           touch unrelated files. When done, reply with a short summary of what you changed and anything you could not do.

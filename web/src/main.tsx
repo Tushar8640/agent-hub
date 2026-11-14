@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './lib/install.ts'
 import App from './App.tsx'
 
 // Installable app: cache the app shell (HTTPS or localhost only; plain-http LAN skips this).

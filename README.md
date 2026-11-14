@@ -25,6 +25,7 @@ Pair the phone by QR code; the app can be installed to the home screen (PWA).
 3. Edit `config.yaml`: set `projectRoots` (and any `projects`) to folders on this PC, then restart (`Ctrl+C`, `npm start`).
 4. On the PC open **http://localhost:8650** → **Devices → Show pairing QR code**, and scan it with the phone
    (same Wi-Fi, or Tailscale).
+   To install as an app: open the hub's HTTPS (Tailscale) address on the phone, then press **Install app** in Settings, or use Chrome menu → **Install app**.
 5. Test with the **Echo (test)** agent first.
 
 Background and autostart:

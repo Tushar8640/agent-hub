@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from 'react'
-import { ChartLine, Plus, Settings, Smartphone, Trash2 } from 'lucide-react'
+import { ArrowDownToLine, ChartLine, Plus, Settings, Smartphone, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,6 +10,7 @@ import { useHub } from '@/hooks/use-hub'
 import { useRoute, go } from '@/hooks/use-route'
 import { listTime, FULL_ACCESS_NOTE, TYPE_LABEL } from '@/lib/format'
 import { useDeleteChat } from '@/components/chat-actions'
+import { useInstallPrompt } from '@/lib/install'
 import type { ChatSummary } from '@/lib/types'
 
 export function Sidebar() {
@@ -16,6 +18,7 @@ export function Sidebar() {
   const route = useRoute()
   const [q, setQ] = useState('')
   const deleteChat = useDeleteChat()
+  const { canInstall, isInstalled, isSecure, promptInstall } = useInstallPrompt()
 
   const chats = (state?.chats || []).filter(c => {
     const s = q.trim().toLowerCase()
@@ -61,6 +64,29 @@ export function Sidebar() {
       </nav>
 
       <div className="grid gap-2 border-t px-3 py-2.5 text-xs text-muted-foreground">
+        {canInstall ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-center gap-1.5 text-xs"
+            onClick={async () => {
+              const ok = await promptInstall()
+              if (ok) toast.success('Agent Hub installed')
+            }}
+          >
+            <ArrowDownToLine className="size-3.5" />
+            Install app
+          </Button>
+        ) : !isSecure && !isInstalled && state?.publicUrl ? (
+          <a
+            href={state.publicUrl}
+            className="flex items-center justify-center gap-1.5 rounded-md border border-dashed py-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+            title="Open via HTTPS to install as an app"
+          >
+            <ArrowDownToLine className="size-3" />
+            Open HTTPS to install
+          </a>
+        ) : null}
         <div className="flex flex-wrap gap-x-3">
           <span>Running <b className="text-foreground">{state ? `${state.stats.running}/${state.maxParallel}` : '–'}</b></span>
           <span>Queued <b className="text-foreground">{state?.stats.queued ?? '–'}</b></span>

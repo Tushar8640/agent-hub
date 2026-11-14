@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { Trash2 } from 'lucide-react'
+import { ArrowDownToLine, Check, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import { TYPE_LABEL } from '@/lib/format'
 import type { SettingsView } from '@/lib/types'
 import { useHub } from '@/hooks/use-hub'
 import { useDialogs } from '@/hooks/use-dialogs'
+import { useInstallPrompt } from '@/lib/install'
 
 export function Settings() {
   const { refresh } = useHub()
@@ -21,6 +22,7 @@ export function Settings() {
   const [s, setS] = useState<SettingsView | null>(null)
   const [form, setForm] = useState({ maxParallel: 3, runTimeoutMinutes: 20, branchByDefault: true })
   const [error, setError] = useState('')
+  const { canInstall, isInstalled, isSecure, promptInstall } = useInstallPrompt()
 
   const load = useCallback(() => {
     getJSON<SettingsView>('/api/settings')
@@ -195,6 +197,60 @@ export function Settings() {
                 <Button variant="outline" onClick={restart}>Restart hub</Button>
                 {s.local && <Button asChild variant="outline"><a href="#/devices">Paired devices</a></Button>}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>App installation</CardTitle>
+              <CardDescription>Install Agent Hub as a standalone mobile or desktop app.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {isInstalled ? (
+                <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Check className="size-4 text-emerald-500" />
+                  Agent Hub is already installed on this device.
+                </p>
+              ) : canInstall ? (
+                <div className="grid gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    You can install Agent Hub to your home screen for quick access and a full-screen experience.
+                  </p>
+                  <div>
+                    <Button
+                      onClick={async () => {
+                        const ok = await promptInstall()
+                        if (ok) toast.success('Agent Hub installed')
+                      }}
+                      className="gap-2"
+                    >
+                      <ArrowDownToLine className="size-4" />
+                      Install app
+                    </Button>
+                  </div>
+                </div>
+              ) : !isSecure ? (
+                <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300">
+                  <p className="font-medium text-amber-200">Installation requires HTTPS</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Browsers only allow installing web apps over a secure HTTPS connection.
+                    {s.hub.publicUrl ? (
+                      <>
+                        {' '}Open the hub via its HTTPS address:{' '}
+                        <a href={s.hub.publicUrl} className="underline text-foreground" target="_blank" rel="noreferrer">
+                          {s.hub.publicUrl}
+                        </a>
+                      </>
+                    ) : (
+                      ' Configure a public HTTPS address or Tailscale in config.yaml to enable installation on mobile.'
+                    )}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  To install, open your browser menu (⋮ in Chrome or Share in Safari) and choose &quot;Install app&quot; or &quot;Add to Home Screen&quot;.
+                </p>
+              )}
             </CardContent>
           </Card>
         </>

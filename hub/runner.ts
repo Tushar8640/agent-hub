@@ -21,6 +21,7 @@ export const formatSize = (n: number) =>
 export interface Runner {
   queue(chat: Chat, prompt: string, source: RunSource, attachments?: Attachment[]): Run;
   approve(run: Run, editedHandoff?: string): boolean;
+  autoApproveWaiting(chat: Chat): number;
   abortRun(run: Run): boolean;
   abortChat(chat: Chat): number;
   abortAll(): number;
@@ -98,7 +99,10 @@ export function createRunner(o: RunnerOptions): Runner {
     const nextRun = newRun(chat, next.agentId, fill(next.prompt, { input: wf.input, previous }), run.source,
       { ...wf, step: wf.step + 1, label: next.label });
     nextRun.handoff = previous;
-    if (next.approve) nextRun.status = 'awaiting';
+    if (next.approve) {
+      if (chat.autoApprove) addActivity(nextRun, '⚡', 'Auto-approved (Auto build is on)');
+      else nextRun.status = 'awaiting';
+    }
   }
 
   // Records what the run changed. Never throws: a git problem is shown on the run instead.
@@ -251,26 +255,36 @@ export function createRunner(o: RunnerOptions): Runner {
     return true;
   }
 
+  function approve(run: Run, editedHandoff?: string): boolean {
+    if (run.status !== 'awaiting' || !run.workflow) return false;
+    if (typeof editedHandoff === 'string' && editedHandoff.trim() && editedHandoff !== run.handoff) {
+      const step = o.workflows.get(run.workflow.id)?.steps[run.workflow.step];
+      if (step) {
+        run.handoff = editedHandoff;
+        run.prompt = fill(step.prompt, { input: run.workflow.input, previous: editedHandoff });
+        addActivity(run, '✏️', 'Plan edited before approval');
+      }
+    }
+    run.status = 'queued';
+    changed();
+    pump();
+    return true;
+  }
+
   return {
     abortRun,
     abortChat: chat => db.runs.filter(r => r.chatId === chat.id && isActive(r)).filter(abortRun).length,
     abortAll: () => db.runs.filter(isActive).filter(abortRun).length,
     pump,
-
-    approve(run, editedHandoff) {
-      if (run.status !== 'awaiting' || !run.workflow) return false;
-      if (typeof editedHandoff === 'string' && editedHandoff.trim() && editedHandoff !== run.handoff) {
-        const step = o.workflows.get(run.workflow.id)?.steps[run.workflow.step];
-        if (step) {
-          run.handoff = editedHandoff;
-          run.prompt = fill(step.prompt, { input: run.workflow.input, previous: editedHandoff });
-          addActivity(run, '✏️', 'Plan edited before approval');
-        }
+    approve,
+    autoApproveWaiting(chat: Chat) {
+      const waiting = db.runs.filter(r => r.chatId === chat.id && r.status === 'awaiting');
+      let count = 0;
+      for (const r of waiting) {
+        addActivity(r, '⚡', 'Auto-approved (Auto build is on)');
+        if (approve(r)) count++;
       }
-      run.status = 'queued';
-      changed();
-      pump();
-      return true;
+      return count;
     },
 
     queue(chat, typed, source, attachments = []) {

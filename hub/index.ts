@@ -270,6 +270,7 @@ function chatSummary(c: Chat) {
     projectId: c.projectId, projectName: projects.get(c.projectId)?.name || c.projectId,
     branch: c.branch ? { name: c.branch.name, mergedAt: c.branch.mergedAt } : null,
     skipPermissions: c.skipPermissions === true,
+    autoApprove: c.autoApprove === true,
     model: c.model || null,
     runCount: runs.length, costUsd: runs.reduce((s, r) => s + (r.costUsd || 0), 0),
     lastAt: last ? (last.endedAt || last.startedAt || last.createdAt) : c.createdAt,
@@ -285,6 +286,7 @@ const publicWorkflow = (w: Workflow) => {
   return {
     id: w.id, name: w.name, description: w.description,
     steps: w.steps.map(s => ({ agentId: s.agentId, agentName: agents.get(s.agentId)?.name || s.agentId, label: s.label })),
+    hasApproval: w.steps.some(s => s.approve),
     available: missing.length === 0,
     problem: missing.length ? `Not available: ${missing.map(a => a?.name || 'unknown agent').join(', ')}` : null,
   };
@@ -305,6 +307,7 @@ function snapshot() {
   return {
     now: Date.now(),
     name: config.name,
+    publicUrl: config.publicUrl,
     maxParallel: limits().maxParallel,
     branchByDefault: db.settings.branchByDefault ?? true,
     agents: [...agents.values()].map(a => {
@@ -654,6 +657,7 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
     const chat: Chat = {
       id: db.nextChatId++, title: 'New chat', agentId: agent ? agent.id : null, workflowId: workflow ? workflow.id : null,
       projectId: project.id, sessions: {}, branch: null, model: str(body.model, 80) || null, createdAt: Date.now(), updatedAt: Date.now(),
+      autoApprove: workflow && body.autoApprove === true ? true : undefined,
     };
     const files = takeAttachments(body.attachments, chat);
     if (typeof files === 'string') return json(res, 400, { error: files });
@@ -714,7 +718,7 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
     return json(res, 200, { ok: true });
   }
 
-  const chatPost = p.match(/^\/api\/chats\/(\d+)\/(messages|abort|rename|delete|merge|reset-session|permissions|model)$/);
+  const chatPost = p.match(/^\/api\/chats\/(\d+)\/(messages|abort|rename|delete|merge|reset-session|permissions|model|auto-approve)$/);
   if (!chatPost) return json(res, 404, { error: 'Not found' });
   const chat = findChat(Number(chatPost[1]));
   if (!chat) return json(res, 404, { error: 'Chat not found' });
@@ -758,6 +762,16 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
       log(`chat ${chat.id}: skip permissions ${body.skip ? 'ON' : 'off'} (${device ? `device "${device.name}"` : 'PC'})`);
       changed();
       return json(res, 200, { ok: true, skipPermissions: chat.skipPermissions });
+    }
+    case 'auto-approve': {
+      const body = await readBody(req, 1024);
+      if (typeof body.on !== 'boolean') return json(res, 400, { error: 'Send { "on": true } or { "on": false }.' });
+      if (!chat.workflowId) return json(res, 400, { error: 'Auto build is only for workflow chats.' });
+      chat.autoApprove = body.on;
+      const approved = body.on ? runner.autoApproveWaiting(chat) : 0;
+      log(`chat ${chat.id}: auto build ${body.on ? 'ON' : 'off'} (${device ? `device "${device.name}"` : 'PC'})`);
+      changed();
+      return json(res, 200, { ok: true, autoApprove: chat.autoApprove, approved });
     }
     case 'rename': {
       const title = str((await readBody(req)).title, 80).replace(/\s+/g, ' ');

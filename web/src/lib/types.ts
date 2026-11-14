@@ -35,6 +35,7 @@ export interface AgentInfo {
 export interface WorkflowInfo {
   id: string; name: string; description: string; available: boolean; problem: string | null
   steps: { agentId: string; agentName: string; label: string }[]
+  hasApproval?: boolean
 }
 export interface ProjectInfo { id: string; name: string; path: string; missing: boolean; git: boolean; source?: 'config' | 'discovered' | 'added' }
 
@@ -42,6 +43,7 @@ export interface ChatSummary {
   id: number; title: string; status: string; preview: { who: string; text: string } | null
   kind: 'agent' | 'workflow'; workflowId: string | null; branch: { name: string; mergedAt: number | null } | null
   skipPermissions: boolean // agents in this chat run with --dangerously-skip-permissions
+  autoApprove: boolean
   agentId: string; agentName: string; projectId: string; projectName: string
   model?: string | null
   runCount: number; costUsd: number; lastAt: number; createdAt: number
@@ -52,6 +54,7 @@ export interface HubState {
   agents: AgentInfo[]; workflows: WorkflowInfo[]; projects: ProjectInfo[]; chats: ChatSummary[]
   stats: { running: number; queued: number; costToday: number | null }
   roots?: string[]
+  publicUrl?: string | null
 }
 
 export interface ChatDetail { chat: ChatSummary; runs: Run[] }

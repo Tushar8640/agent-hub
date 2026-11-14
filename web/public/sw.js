@@ -1,7 +1,12 @@
 // Service worker: network first (updates show at once), cached copy when offline. API calls are never cached.
-const CACHE = 'agent-hub-v2';
+const CACHE = 'agent-hub-v3';
+const PRECACHE = ['/', '/index.html', '/manifest.webmanifest', '/icon-192.png'];
 
-self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(PRECACHE)).then(() => self.skipWaiting()),
+  );
+});
 
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))));

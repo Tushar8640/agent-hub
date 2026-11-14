@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ChevronLeft, GitBranch, GitMerge, MoreHorizontal, Pencil, RefreshCw, ShieldCheck, ShieldOff, Square, Trash2 } from 'lucide-react'
+import { ChevronLeft, GitBranch, GitMerge, MoreHorizontal, Pencil, RefreshCw, ShieldCheck, ShieldOff, Square, Trash2, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
@@ -100,8 +101,24 @@ export function ChatView({ id }: { id: number }) {
     } catch (e) { toast.error(errorText(e, 'Could not change the setting.')) }
   }
 
+  const setAutoApprove = async (on: boolean) => {
+    try {
+      const res = await post<{ ok: boolean; autoApprove: boolean; approved: number }>(`/api/chats/${id}/auto-approve`, { on })
+      if (on) {
+        toast.success(res.approved > 0 ? 'Auto build on and approved the waiting step' : 'Auto build on')
+      } else {
+        toast.success('Auto build off: steps wait for your approval')
+      }
+      refresh()
+    } catch (e) {
+      toast.error(errorText(e, 'Could not change the setting.'))
+    }
+  }
+
   const currentAgent = state?.agents.find(a => a.id === c?.agentId)
   const models = currentAgent?.models || []
+  const workflow = c?.workflowId ? state?.workflows.find(w => w.id === c.workflowId) : undefined
+  const hasApproval = workflow?.hasApproval ?? false
 
   const onModelChange = async (newModel: string) => {
     try {
@@ -137,6 +154,13 @@ export function ChatView({ id }: { id: number }) {
                 <ShieldOff className="size-3" /> <span className="hidden sm:inline">No permission checks</span>
               </button>
             )}
+            {c && hasApproval && (
+              <label className="inline-flex shrink-0 items-center gap-1 cursor-pointer select-none" title="Auto build: run the Build step without waiting for my approval">
+                <Zap className="size-3 text-amber-400" />
+                <span className="hidden sm:inline">Auto build</span>
+                <Switch size="sm" checked={c.autoApprove} onCheckedChange={setAutoApprove} aria-label="Auto build" />
+              </label>
+            )}
           </div>
         </div>
         {busy && <Button variant="destructive" size="sm" onClick={stop} aria-label="Stop"><Square /> <span className="hidden sm:inline">Stop</span></Button>}
@@ -154,6 +178,11 @@ export function ChatView({ id }: { id: number }) {
               {c.skipPermissions
                 ? <DropdownMenuItem onSelect={() => setSkip(false)}><ShieldCheck /> Turn permission checks on</DropdownMenuItem>
                 : <DropdownMenuItem variant="destructive" onSelect={() => setSkip(true)}><ShieldOff /> Skip permissions…</DropdownMenuItem>}
+              {c.workflowId && hasApproval && (
+                <DropdownMenuItem onSelect={() => setAutoApprove(!c.autoApprove)}>
+                  <Zap /> ⚡ Auto build: {c.autoApprove ? 'On' : 'Off'}
+                </DropdownMenuItem>
+              )}
               <DropdownMenuSeparator />
               <DropdownMenuItem variant="destructive" onSelect={async () => { if (await deleteChat(c)) go('#/') }}>
                 <Trash2 /> Delete chat
@@ -188,7 +217,7 @@ export function ChatView({ id }: { id: number }) {
         models={c?.kind === 'agent' ? models : undefined}
         currentModel={c?.model || 'default'}
         onModelChange={onModelChange}
-        hint={c?.status === 'awaiting' ? 'Approve or cancel the waiting step first; new messages wait until then.'
+        hint={c?.status === 'awaiting' ? 'Approve or cancel the waiting step first; new messages wait until then. Or turn on Auto build.'
           : busy ? 'The agent is working. New messages wait their turn in this chat.'
           : 'The agent remembers this chat · Enter to send, Shift+Enter for a new line'}
         onSend={async (text, attachments) => {

@@ -67,6 +67,8 @@ export interface Chat {
   // Per-chat "skip permissions": agents in this chat run with --dangerously-skip-permissions (no permission checks).
   // Off by default; toggled from the chat menu. Workflow steps with their own tool limits are never loosened.
   skipPermissions?: boolean;
+  // Workflow chats: steps marked `approve` run without waiting. Off by default.
+  autoApprove?: boolean;
   createdAt: number;
   updatedAt: number;
 }
