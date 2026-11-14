@@ -1,0 +1,101 @@
+# Agent Hub configuration.
+# On first start the hub copies this file to config.yaml. Edit config.yaml (not this file), then restart the hub.
+# Do not put API keys or passwords in this file. Agents read their own credentials (for example, Claude Code's login).
+
+name: Agent Hub
+port: 8650
+# 0.0.0.0 = reachable from your phone on the same Wi-Fi or Tailscale (every request still needs a paired device).
+# 127.0.0.1 = this PC only (use with publicUrl + "tailscale serve" for HTTPS access from the phone).
+host: 0.0.0.0
+# Optional HTTPS address shown first on the pairing screen, e.g. https://my-pc.tailnet-name.ts.net
+publicUrl:
+maxParallel: 3          # chats that can work at the same time; extra messages wait in a queue
+runTimeoutMinutes: 20   # a single message is stopped after this long
+
+# Folders the hub searches for projects (2 levels deep). Only folders here (or under them) can be used.
+projectRoots:
+  - C:\Users\you\projects   # change to your folders
+
+# Folders the agents may work in. Each chat runs in one project (optional if projectRoots is set).
+# projects:
+#   - id: minimal
+#     name: Minimal
+#     path: C:\path\to\project
+#     # Chats can work on their own git branch (a separate folder; node_modules is linked automatically).
+#     # Git-ignored files the branch folder also needs, copied from the project when the branch is created:
+#     # branchCopy: [.env.local]
+
+# Agents. Add as many as you like; each chat picks one.
+agents:
+  # Claude Code CLI. "command" is detected automatically on Windows (npm global install);
+  # set it to the full path of claude.exe if detection fails.
+  - id: claude
+    name: Claude Code
+    type: claude-code
+    # command: C:\path\to\claude.exe
+    # model: default | opus | sonnet | haiku  (aliases resolve to the latest model your Claude Code CLI knows)
+    permissionMode: acceptEdits   # default | acceptEdits | plan   (bypassPermissions is refused by the hub)
+    allowedTools:                 # "Medium": read/edit files plus a few safe commands
+      - Read
+      - Edit
+      - Write
+      - Glob
+      - Grep
+      - "Bash(npm run build)"
+      - "Bash(npm run lint)"
+      - "Bash(git status)"
+      - "Bash(git diff:*)"
+      - "Bash(git log:*)"
+
+  # Antigravity CLI (agy.exe). "command" is detected automatically (%LOCALAPPDATA%\agy\bin\agy.exe).
+  # skipPermissions: true passes --dangerously-skip-permissions: the agent can then edit files and run ANY command
+  # on this PC without asking. Without it, agy may be unable to change files in this non-interactive mode.
+  - id: antigravity
+    name: Antigravity
+    type: antigravity
+    # command: C:\Users\you\AppData\Local\agy\bin\agy.exe
+    skipPermissions: false
+    # Dashboard "Check now" runs agy with these arguments to show its plan usage (default: its /usage command).
+    # usageArgs: ["-p", "/usage", "--output-format", "json"]
+
+  # Any command-line agent: the prompt goes in on stdin (input: stdin) or as the last argument (input: arg,
+  # or put "{prompt}" where it should go). Whatever it prints is the reply.
+  # context: transcript  -> the hub sends earlier messages of the chat along with each new one.
+  # Use an .exe or "node script.js"; .cmd/.bat files are not supported because the hub never uses a shell.
+  - id: echo
+    name: Echo (test)
+    type: cli
+    command: node
+    args: ["-e", "process.stdin.pipe(process.stdout)"]
+    input: stdin
+    context: none
+
+# Workflows: one message, several agents in turn. Each step's reply is passed to the next step as {previous};
+# {input} is your original message. A step can only tighten an agent's permissions (allowedTools/permissionMode).
+workflows:
+  - id: plan-build
+    name: Plan (Claude) → Build (Antigravity)
+    description: Claude reads the project and writes a plan without changing files; Antigravity implements it.
+    steps:
+      - agent: claude
+        label: Plan
+        allowedTools: [Read, Glob, Grep]   # read-only: Claude cannot edit files in this step
+        prompt: |
+          You are the planner. Read the project as needed, but do not change any files.
+          Write a clear, numbered implementation plan for the task below: which files to change, what to change
+          in each, and how to check the result. Be concrete and brief; another coding agent will implement it.
+
+          Task:
+          {input}
+      - agent: antigravity
+        label: Build
+        approve: true                      # pause: you read (and may edit) the plan, then press "Build"
+        prompt: |
+          Implement the following plan in this project. Follow it step by step, keep changes minimal and do not
+          touch unrelated files. When done, reply with a short summary of what you changed and anything you could not do.
+
+          Original task:
+          {input}
+
+          Plan:
+          {previous}

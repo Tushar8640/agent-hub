@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#0b0f17">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Agent Hub</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-route="home">
+<div class="gate" id="gate" hidden></div>
+
+<div class="app" id="app" hidden>
+  <aside class="sidebar">
+    <div class="side-head">
+      <h1 id="hub-name">Agent Hub</h1>
+      <span class="conn" id="conn-wrap" title="Connecting…"><span class="dot" id="dot"></span><span id="conn" class="sr-only">Connecting…</span></span>
+      <div class="head-icons">
+        <a class="round-btn icon-btn" href="#/dashboard" data-nav="dashboard" title="Dashboard" aria-label="Dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+        </a>
+        <a class="round-btn icon-btn" href="#/settings" data-nav="settings" title="Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        </a>
+        <a class="round-btn icon-btn local-only" href="#/devices" data-nav="devices" title="Devices (pair a phone)" aria-label="Devices">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg>
+        </a>
+        <a class="round-btn icon-btn primary-btn" href="#/new" title="New chat" aria-label="New chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </a>
+      </div>
+    </div>
+    <div class="search"><input id="search" type="search" placeholder="Search chats" aria-label="Search chats"></div>
+    <nav class="chat-list" id="chat-list"></nav>
+    <div class="side-foot">
+      <div class="foot-row">
+        <span>Running <b id="s-running">0</b></span>
+        <span>Queued <b id="s-queued">0</b></span>
+        <span>Today <b id="s-cost">–</b></span>
+      </div>
+      <div class="agent-pills" id="agent-pills"></div>
+    </div>
+  </aside>
+
+  <main class="pane">
+    <section class="screen home" id="screen-home">
+      <div class="big">A</div>
+      <h2>Your agents, in one place</h2>
+      <p>Start a chat with any agent in any project.<br>Chats keep their context, and several agents can work at once.</p>
+      <a class="btn primary" href="#/new">Start a new chat</a>
+    </section>
+
+    <section class="screen" id="screen-chat" hidden>
+      <header class="chat-head">
+        <a class="round-btn back" href="#/" aria-label="Back to chats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <div class="head-main" id="head-main"></div>
+        <div class="head-actions" id="head-actions"></div>
+      </header>
+      <div class="thread" id="thread"></div>
+      <form class="composer" id="composer">
+        <div class="attach-list" id="attach-list" hidden></div>
+        <div class="compose-row">
+          <button class="attach" id="attach-btn" type="button" title="Attach files (or paste / drop them)" aria-label="Attach files">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.4 11.1-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l8.5-8.5a3.7 3.7 0 0 1 5.2 5.2l-8.5 8.5a1.8 1.8 0 0 1-2.6-2.6l7.8-7.8"/></svg>
+          </button>
+          <input type="file" id="file-input" multiple hidden>
+          <textarea id="input" rows="1" placeholder="Message the agent…" aria-label="Message"></textarea>
+          <button class="send" id="send" type="submit" aria-label="Send">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3.4 20.4 21 12 3.4 3.6 3.4 10l12.6 2-12.6 2z"/></svg>
+          </button>
+        </div>
+        <div class="compose-hint"><span id="hint"></span><span class="err" id="form-error"></span></div>
+      </form>
+    </section>
+
+    <section class="screen" id="screen-dashboard" hidden>
+      <header class="chat-head">
+        <a class="round-btn back" href="#/" aria-label="Back to chats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <div class="head-main"><div class="head-text"><div class="head-title">Dashboard</div><div class="head-sub">Usage limits, activity and everything that is running</div></div></div>
+        <div class="head-actions"><button class="pill-btn danger" id="stop-all" type="button">Stop all</button></div>
+      </header>
+      <div class="panel" id="dash-body"><p class="muted">Loading…</p></div>
+    </section>
+
+    <section class="screen" id="screen-settings" hidden>
+      <header class="chat-head">
+        <a class="round-btn back" href="#/" aria-label="Back to chats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <div class="head-main"><div class="head-text"><div class="head-title">Settings</div><div class="head-sub">How the hub runs your agents</div></div></div>
+      </header>
+      <div class="panel" id="settings-body"><p class="muted">Loading…</p></div>
+    </section>
+
+    <section class="screen" id="screen-devices" hidden>
+      <header class="chat-head">
+        <a class="round-btn back" href="#/" aria-label="Back to chats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        </a>
+        <div class="head-main"><div class="head-text"><div class="head-title">Devices</div><div class="head-sub">Pair a phone and manage paired devices</div></div></div>
+      </header>
+      <div class="devices">
+        <div class="card">
+          <h3>Pair a phone</h3>
+          <p>Shows a QR code that works for 5 minutes and only once. Scan it with the phone's camera; the phone must be on the same Wi-Fi or on Tailscale.</p>
+          <button class="btn primary" id="pair-new" type="button">Show pairing QR code</button>
+          <div id="pair-box"></div>
+        </div>
+        <div class="card">
+          <h3>Paired devices</h3>
+          <div id="device-list"><p class="muted">Loading…</p></div>
+        </div>
+        <div class="card">
+          <h3>Use it away from home</h3>
+          <p>Install Tailscale on this PC and on your phone and sign in to the same account. The phone can then reach the hub from anywhere, without opening ports on your router. For an installable app with HTTPS, run <code>tailscale serve</code> for port 8650 and put the HTTPS address in <code>publicUrl</code> in config.yaml.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>

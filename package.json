@@ -1,0 +1,29 @@
+{
+  "name": "agent-hub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Run and chat with Claude Code and other coding agents on your PC from your phone. Plug-and-play adapters, QR pairing, PWA.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.6"
+  },
+  "scripts": {
+    "postinstall": "npm --prefix web install --ignore-scripts",
+    "build:web": "npm --prefix web run build",
+    "prestart": "npm run build:web || echo Web build failed - the hub serves the previous build (or web-legacy).",
+    "start": "tsx hub/index.ts",
+    "dev": "tsx watch hub/index.ts",
+    "dev:web": "npm --prefix web run dev",
+    "typecheck": "tsc -p tsconfig.json && npm --prefix web run build"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "tsx": "^4.19.0",
+    "yaml": "^2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.6.0"
+  }
+}

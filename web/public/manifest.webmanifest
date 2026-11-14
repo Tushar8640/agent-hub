@@ -1,0 +1,13 @@
+{
+  "name": "Agent Hub",
+  "short_name": "Agent Hub",
+  "description": "Chat with the coding agents on your PC.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

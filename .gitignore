@@ -1,0 +1,16 @@
+node_modules/
+data/
+logs/
+config.yaml
+# built React app
+web/dist/
+# compiled output of the old app
+web-legacy/public/*.js
+
+# secrets and local files
+.env
+.env.*
+*.pem
+*.key
+*.local
+
