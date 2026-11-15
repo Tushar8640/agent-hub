@@ -307,7 +307,7 @@ function TextBlock({ text }: { text: string }) {
     }
 
     // Horizontal Rule
-    if (/^(\*\*\*|---|___)$/.test(trimmed)) {
+    if (/^(\*{3,}|-{3,}|_{3,}|(\*\s*){3,}|(-\s*){3,}|(_\s*){3,})$/.test(trimmed)) {
       flushList()
       flushTable()
       flushBlockquote()
@@ -315,14 +315,15 @@ function TextBlock({ text }: { text: string }) {
       continue
     }
 
-    // Headings
-    const headingMatch = rawLine.match(/^(#{1,6})\s+(.*)$/)
-    if (headingMatch) {
+    // Headings: #, ##, ###, etc.
+    const headingMatch = trimmed.match(/^(#{1,6})\s*(.*)$/)
+    if (headingMatch && headingMatch[2]) {
       flushList()
       flushTable()
       flushBlockquote()
       const level = headingMatch[1].length
-      const headingContent = parseInline(headingMatch[2])
+      const cleanHeading = headingMatch[2].replace(/\s*#+\s*$/, '').trim()
+      const headingContent = parseInline(cleanHeading)
 
       if (level === 1) {
         elements.push(
@@ -462,8 +463,8 @@ function TextBlock({ text }: { text: string }) {
 // Inline parser for bold, italic, strikethrough, inline code, and links
 function parseInline(text: string): ReactNode[] {
   const parts: ReactNode[] = []
-  // Matches: `code`, **bold**, *italic*, ~~strikethrough~~, [link](url)
-  const regex = /(`[^`\n]+`|\*\*[^*]+?\*\*|\*[^*]+?\*|~~[^~]+?~~|\[([^\]]+)\]\(([^)]+)\))/g
+  // Matches: `code`, **bold**, __bold__, *italic*, _italic_, ~~strikethrough~~, [link](url)
+  const regex = /(`[^`\n]+`|\*\*[^*]+?\*\*|__[^_]+?__|\*[^\s*][^*]*?\*|_[^\s_][^_]*?_|~~[^~]+?~~|\[([^\]]+)\]\(([^)]+)\))/g
 
   let lastIndex = 0
   let match: RegExpExecArray | null
@@ -486,10 +487,10 @@ function parseInline(text: string): ReactNode[] {
           {token.slice(1, -1)}
         </code>
       )
-    } else if (token.startsWith('**')) {
+    } else if (token.startsWith('**') || token.startsWith('__')) {
       // Bold
       parts.push(<strong key={key++} className="font-semibold text-foreground">{parseInline(token.slice(2, -2))}</strong>)
-    } else if (token.startsWith('*')) {
+    } else if (token.startsWith('*') || token.startsWith('_')) {
       // Italic
       parts.push(<em key={key++} className="italic text-foreground/90">{parseInline(token.slice(1, -1))}</em>)
     } else if (token.startsWith('~~')) {

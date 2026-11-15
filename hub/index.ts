@@ -247,6 +247,25 @@ function serveStatic(res: http.ServerResponse, pathname: string) {
 const chatRuns = (id: number) => db.runs.filter(r => r.chatId === id);
 const findChat = (id: number) => db.chats.find(c => c.id === id) || null;
 
+function stripMarkdown(text: string): string {
+  if (!text) return '';
+  return text
+    .replace(/```[\s\S]*?```/g, ' [code] ')
+    .replace(/```\w*/g, '')
+    .replace(/(?:^|\n)\s*#{1,6}\s+/g, ' ')
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/(?:^|\n)\s*>\s*/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[-*+]\s+\[[ xX]\]\s+/g, '')
+    .replace(/(?:^|\n)\s*[-*+]\s+/g, ' ')
+    .replace(/(?:^|\n)\s*\d+\.\s+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function chatSummary(c: Chat) {
   const runs = chatRuns(c.id);
   const last = runs[runs.length - 1];
@@ -260,7 +279,7 @@ function chatSummary(c: Chat) {
     else if (last.status === 'running') { const a = last.activity[last.activity.length - 1]; preview = { who: 'activity', text: a ? a.text : 'Working…' }; }
     else if (last.status === 'queued') preview = { who: 'you', text: last.prompt };
     else preview = { who: 'error', text: last.status === 'aborted' ? 'Stopped' : (last.error || last.status) };
-    preview.text = clip(preview.text.replace(/\s+/g, ' '), 140);
+    preview.text = clip(stripMarkdown(preview.text), 140);
   }
   const wf = c.workflowId ? workflows.get(c.workflowId) : undefined;
   // For the list/header: a workflow chat is shown under the workflow's name and id (used for its avatar colour).

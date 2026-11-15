@@ -105,3 +105,35 @@ export function labelFor(id: string): string {
   return id
 }
 export const FULL_ACCESS_NOTE = 'Full access: runs without permission checks'
+
+// Strip raw markdown syntax from preview strings
+export function stripMarkdown(text: string): string {
+  if (!text) return ''
+  return text
+    .replace(/```[\s\S]*?```/g, ' [code] ')
+    .replace(/```\w*/g, '')
+    .replace(/(?:^|\n)\s*#{1,6}\s+/g, ' ')
+    .replace(/(\*\*|__)(.*?)\1/g, '$2')
+    .replace(/(\*|_)(.*?)\1/g, '$2')
+    .replace(/~~(.*?)~~/g, '$1')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/(?:^|\n)\s*>\s*/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[-*+]\s+\[[ xX]\]\s+/g, '')
+    .replace(/(?:^|\n)\s*[-*+]\s+/g, ' ')
+    .replace(/(?:^|\n)\s*\d+\.\s+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Clean badge name (especially workflows like "Plan (Claude) -> Build (Antigravity)")
+export function formatBadgeName(name: string): string {
+  if (!name) return ''
+  if (name.includes('->') || name.includes('→')) {
+    return name
+      .replace(/\s*\([^)]*\)/g, '')
+      .replace(/\s*->\s*/g, ' → ')
+      .trim()
+  }
+  return name
+}

@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { AgentAvatar } from '@/components/common'
 import { useHub } from '@/hooks/use-hub'
 import { useRoute, go } from '@/hooks/use-route'
-import { listTime, FULL_ACCESS_NOTE, TYPE_LABEL } from '@/lib/format'
+import { listTime, FULL_ACCESS_NOTE, TYPE_LABEL, formatBadgeName, stripMarkdown } from '@/lib/format'
 import { useDeleteChat } from '@/components/chat-actions'
 import { useInstallPrompt } from '@/lib/install'
 import type { ChatSummary } from '@/lib/types'
@@ -143,9 +143,17 @@ function ChatItem({ chat: c, active, onDelete }: { chat: ChatSummary; active: bo
             <Trash2 className="size-4" />
           </button>
         </div>
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={cn('min-w-0 flex-1 truncate text-sm text-muted-foreground', tone)}>{prev.replace(/\s+/g, ' ')}</span>
-          <Badge variant="secondary" className="max-w-[45%] shrink truncate">{c.agentName}</Badge>
+        <div className="flex min-w-0 items-center justify-between gap-2">
+          <span className={cn('min-w-0 flex-1 truncate text-sm text-muted-foreground', tone)}>
+            {stripMarkdown(prev)}
+          </span>
+          <Badge
+            variant="secondary"
+            className="max-w-[130px] shrink-0 justify-start px-2 py-0 text-[11px] font-normal"
+            title={c.agentName}
+          >
+            <span className="truncate">{formatBadgeName(c.agentName)}</span>
+          </Badge>
         </div>
       </div>
     </a>
