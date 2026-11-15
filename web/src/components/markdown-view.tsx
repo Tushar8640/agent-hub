@@ -478,11 +478,11 @@ function parseInline(text: string): ReactNode[] {
     const token = match[0]
 
     if (token.startsWith('`')) {
-      // Inline code
+      // Inline code (high-contrast, readable in all light & dark themes)
       parts.push(
         <code
           key={key++}
-          className="rounded-md border border-border/70 bg-neutral-900/60 px-1.5 py-0.5 font-mono text-[0.86em] font-medium text-primary-foreground/90 shadow-2xs"
+          className="rounded-md border border-border/80 bg-muted/90 px-1.5 py-0.5 font-mono text-[0.86em] font-medium text-foreground shadow-2xs [overflow-wrap:anywhere]"
         >
           {token.slice(1, -1)}
         </code>

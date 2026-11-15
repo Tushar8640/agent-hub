@@ -52,14 +52,14 @@ export function ThemeSettings() {
   return (
     <>
       {/* Clean, compact card on the Settings page */}
-      <Card className="border-border/80 shadow-xs">
-        <CardHeader className="flex flex-row items-center justify-between gap-4 pb-3">
-          <div className="grid gap-1">
+      <Card className="border-border/80 shadow-xs min-w-0 overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+          <div className="grid min-w-0 gap-1">
             <div className="flex items-center gap-2">
-              <Palette className="size-4 text-primary" />
-              <CardTitle>Appearance & Theme</CardTitle>
+              <Palette className="size-4 shrink-0 text-primary" />
+              <CardTitle className="truncate text-base">Appearance & Theme</CardTitle>
             </div>
-            <CardDescription>
+            <CardDescription className="line-clamp-1 text-xs">
               Customize color palettes, fonts, UI scaling, and 1-click presets.
             </CardDescription>
           </div>
@@ -68,31 +68,32 @@ export function ThemeSettings() {
             type="button"
             variant="outline"
             size="sm"
-            className="gap-2 shrink-0 cursor-pointer"
+            className="gap-1.5 shrink-0 cursor-pointer"
             onClick={() => setModalOpen(true)}
           >
-            <Sparkles className="size-3.5 text-primary" />
-            <span>Customize theme</span>
+            <Sparkles className="size-3.5 text-primary shrink-0" />
+            <span className="hidden min-[420px]:inline">Customize theme</span>
+            <span className="min-[420px]:hidden">Theme</span>
           </Button>
         </CardHeader>
 
-        <CardContent>
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
-            <div className="flex items-center gap-2.5">
+        <CardContent className="min-w-0">
+          <div className="flex flex-wrap items-center justify-between gap-2.5 rounded-xl border border-border/70 bg-muted/30 p-2.5 sm:p-3 text-xs min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <span
-                className="size-4 rounded-full border border-black/20 shadow-2xs shrink-0"
+                className="size-3.5 shrink-0 rounded-full border border-black/20 shadow-2xs"
                 style={{ backgroundColor: activePalette?.color || '#71717a' }}
               />
-              <div className="flex flex-wrap items-center gap-1.5 font-medium text-foreground">
-                <span className="text-foreground">{activePreset?.name || activePalette?.name}</span>
-                <span className="text-muted-foreground/60">·</span>
-                <span className="capitalize text-muted-foreground">{config.mode}</span>
-                <span className="text-muted-foreground/60">·</span>
-                <span className="text-muted-foreground">{activeFont?.name}</span>
+              <div className="flex min-w-0 items-center gap-1.5 font-medium text-foreground">
+                <span className="truncate">{activePreset?.name || activePalette?.name}</span>
+                <span className="text-muted-foreground/60 shrink-0">·</span>
+                <span className="capitalize text-muted-foreground shrink-0">{config.mode}</span>
+                <span className="text-muted-foreground/60 shrink-0 hidden sm:inline">·</span>
+                <span className="text-muted-foreground truncate hidden sm:inline">{activeFont?.name}</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="xs" className="gap-1 text-xs text-muted-foreground hover:text-foreground">
@@ -107,12 +108,12 @@ export function ThemeSettings() {
                       onClick={() => applyPreset(p.id)}
                       className="flex items-center justify-between text-xs cursor-pointer"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="size-2.5 rounded-full" style={{ backgroundColor: p.preview.primary }} />
-                        <span>{p.name}</span>
+                      <div className="flex items-center gap-2 truncate min-w-0">
+                        <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: p.preview.primary }} />
+                        <span className="truncate">{p.name}</span>
                       </div>
                       {config.palette === p.config.palette && config.mode === p.config.mode && (
-                        <Check className="size-3 text-primary" />
+                        <Check className="size-3 text-primary shrink-0 ml-1.5" />
                       )}
                     </DropdownMenuItem>
                   ))}
@@ -127,9 +128,9 @@ export function ThemeSettings() {
                 variant="secondary"
                 size="xs"
                 onClick={() => setModalOpen(true)}
-                className="gap-1 cursor-pointer"
+                className="cursor-pointer"
               >
-                <span>Open Customizer</span>
+                <span>Customizer</span>
               </Button>
             </div>
           </div>
@@ -138,33 +139,33 @@ export function ThemeSettings() {
 
       {/* Full Theme Customizer Modal Dialog */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto p-5 sm:max-h-[85vh] sm:p-6">
-          <DialogHeader className="border-b border-border/60 pb-3">
-            <div className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-2xl max-h-[88vh] overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 min-w-0 gap-0">
+          <DialogHeader className="border-b border-border/60 pb-3 min-w-0">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Palette className="size-4" />
               </div>
-              <div>
-                <DialogTitle>Theme & Appearance Customizer</DialogTitle>
-                <DialogDescription>
-                  Choose from curated presets or customize color palettes, fonts, and UI scaling.
+              <div className="min-w-0 flex-1">
+                <DialogTitle className="truncate text-base sm:text-lg">Theme Customizer</DialogTitle>
+                <DialogDescription className="line-clamp-1 text-xs">
+                  Choose curated presets or customize palettes, typography, and density.
                 </DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
-          <div className="grid gap-5 py-4">
+          <div className="grid min-w-0 w-full gap-5 py-4 overflow-hidden">
             {/* Presets Grid */}
-            <div>
-              <div className="mb-2.5 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 font-medium text-xs text-foreground">
-                  <Sparkles className="size-3.5 text-primary" />
-                  <span>Theme Presets ({presets.length})</span>
+            <div className="min-w-0 w-full">
+              <div className="mb-2 flex items-center justify-between gap-2 min-w-0">
+                <div className="flex items-center gap-1.5 font-medium text-xs text-foreground truncate">
+                  <Sparkles className="size-3.5 text-primary shrink-0" />
+                  <span className="truncate">Theme Presets ({presets.length})</span>
                 </div>
-                <span className="text-[11px] text-muted-foreground">Click any preset to apply instantly</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">1-click apply</span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-3 gap-2 min-w-0 w-full">
                 {presets.map(p => {
                   const isSelected =
                     config.palette === p.config.palette &&
@@ -177,20 +178,20 @@ export function ThemeSettings() {
                       type="button"
                       onClick={() => applyPreset(p.id)}
                       className={cn(
-                        'relative flex flex-col items-start rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 hover:bg-muted/40 cursor-pointer',
+                        'relative flex flex-col items-start rounded-xl border p-2.5 text-left transition-all hover:border-primary/50 hover:bg-muted/40 cursor-pointer min-w-0 w-full overflow-hidden',
                         isSelected
                           ? 'border-primary ring-2 ring-primary/20 bg-muted/50 shadow-2xs'
                           : 'border-border/70 bg-card/60'
                       )}
                     >
-                      <div className="flex w-full items-center justify-between">
-                        <span className="font-semibold text-xs text-foreground">{p.name}</span>
+                      <div className="flex w-full items-center justify-between gap-1 min-w-0">
+                        <span className="font-semibold text-xs text-foreground truncate">{p.name}</span>
                         {isSelected ? (
-                          <Badge variant="default" className="h-4.5 px-1.5 text-[9px] gap-1">
+                          <Badge variant="default" className="h-4.5 px-1.5 text-[9px] gap-1 shrink-0">
                             <Check className="size-2.5" /> Active
                           </Badge>
                         ) : (
-                          <span className="text-[9px] font-mono uppercase text-muted-foreground">
+                          <span className="text-[9px] font-mono uppercase text-muted-foreground shrink-0">
                             {p.config.mode}
                           </span>
                         )}
@@ -201,22 +202,22 @@ export function ThemeSettings() {
                       {/* Swatches */}
                       <div className="mt-2 flex items-center gap-1.5">
                         <span
-                          className="size-3.5 rounded-full border border-black/20 shadow-2xs"
+                          className="size-3 rounded-full border border-black/20 shadow-2xs"
                           style={{ backgroundColor: p.preview.bg }}
                           title="Background"
                         />
                         <span
-                          className="size-3.5 rounded-full border border-black/20 shadow-2xs"
+                          className="size-3 rounded-full border border-black/20 shadow-2xs"
                           style={{ backgroundColor: p.preview.card }}
                           title="Card"
                         />
                         <span
-                          className="size-3.5 rounded-full border border-black/20 shadow-2xs"
+                          className="size-3 rounded-full border border-black/20 shadow-2xs"
                           style={{ backgroundColor: p.preview.primary }}
                           title="Primary accent"
                         />
                         <span
-                          className="size-3.5 rounded-full border border-black/20 shadow-2xs"
+                          className="size-3 rounded-full border border-black/20 shadow-2xs"
                           style={{ backgroundColor: p.preview.accent }}
                           title="Secondary accent"
                         />
@@ -230,9 +231,9 @@ export function ThemeSettings() {
             <Separator />
 
             {/* Color Mode */}
-            <div>
+            <div className="min-w-0 w-full">
               <label className="mb-2 block font-medium text-xs text-foreground">Color Mode</label>
-              <div className="grid grid-cols-3 gap-2 max-w-xs">
+              <div className="grid grid-cols-3 gap-1.5 w-full min-w-0 max-w-xs">
                 {[
                   { id: 'dark' as ThemeMode, label: 'Dark', icon: Moon },
                   { id: 'light' as ThemeMode, label: 'Light', icon: Sun },
@@ -243,22 +244,22 @@ export function ThemeSettings() {
                     type="button"
                     variant={config.mode === id ? 'default' : 'outline'}
                     size="sm"
-                    className="gap-1.5 h-8 text-xs cursor-pointer"
+                    className="gap-1.5 h-8 px-2 text-xs cursor-pointer min-w-0 w-full justify-center"
                     onClick={() => setMode(id)}
                   >
-                    <Icon className="size-3" />
-                    <span>{label}</span>
+                    <Icon className="size-3 shrink-0" />
+                    <span className="truncate">{label}</span>
                   </Button>
                 ))}
               </div>
             </div>
 
             {/* Palettes */}
-            <div>
+            <div className="min-w-0 w-full">
               <label className="mb-2 block font-medium text-xs text-foreground">
                 Color Palette ({palettes.length} choices)
               </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-3 gap-2 min-w-0 w-full">
                 {palettes.map(palette => {
                   const active = config.palette === palette.id
                   return (
@@ -267,18 +268,18 @@ export function ThemeSettings() {
                       type="button"
                       onClick={() => setPalette(palette.id as ThemePalette)}
                       className={cn(
-                        'flex items-center gap-2.5 rounded-xl border p-2 text-left transition-all hover:bg-muted/40 cursor-pointer',
+                        'flex items-center gap-2 rounded-xl border p-2 text-left transition-all hover:bg-muted/40 cursor-pointer min-w-0 w-full overflow-hidden',
                         active
                           ? 'border-primary ring-2 ring-primary/20 bg-muted/50'
                           : 'border-border/60 bg-card/60'
                       )}
                     >
                       <span
-                        className="size-4 shrink-0 rounded-full border border-black/20 shadow-2xs"
+                        className="size-3.5 shrink-0 rounded-full border border-black/20 shadow-2xs"
                         style={{ backgroundColor: palette.color }}
                       />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="flex items-center justify-between gap-1">
                           <span className="truncate text-xs font-semibold text-foreground">
                             {palette.name}
                           </span>
@@ -293,12 +294,12 @@ export function ThemeSettings() {
             </div>
 
             {/* Fonts */}
-            <div>
+            <div className="min-w-0 w-full">
               <div className="mb-2 flex items-center gap-1.5 font-medium text-xs text-foreground">
-                <Type className="size-3 text-primary" />
+                <Type className="size-3 text-primary shrink-0" />
                 <span>Typography & Font Family</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-1 min-[440px]:grid-cols-2 sm:grid-cols-3 gap-2 min-w-0 w-full">
                 {fonts.map(font => {
                   const active = config.font === font.id
                   return (
@@ -308,19 +309,19 @@ export function ThemeSettings() {
                       onClick={() => setFont(font.id as ThemeFont)}
                       style={{ fontFamily: font.family }}
                       className={cn(
-                        'flex flex-col items-start rounded-xl border p-2.5 text-left transition-all hover:bg-muted/40 cursor-pointer',
+                        'flex flex-col items-start rounded-xl border p-2.5 text-left transition-all hover:bg-muted/40 cursor-pointer min-w-0 w-full overflow-hidden',
                         active
                           ? 'border-primary ring-2 ring-primary/20 bg-muted/50'
                           : 'border-border/60 bg-card/60'
                       )}
                     >
-                      <div className="flex w-full items-center justify-between">
-                        <span className="text-xs font-semibold text-foreground">{font.name}</span>
-                        {active && <Check className="size-3 text-primary" />}
+                      <div className="flex w-full items-center justify-between gap-1 min-w-0">
+                        <span className="text-xs font-semibold text-foreground truncate">{font.name}</span>
+                        {active && <Check className="size-3 text-primary shrink-0" />}
                       </div>
-                      <span className="text-[10px] text-muted-foreground mt-0.5">{font.desc}</span>
-                      <div className="mt-1.5 text-xs opacity-80">
-                        The quick brown fox jumps over the lazy dog.
+                      <span className="text-[10px] text-muted-foreground mt-0.5 truncate w-full">{font.desc}</span>
+                      <div className="mt-1.5 text-xs opacity-80 truncate w-full">
+                        The quick brown fox
                       </div>
                     </button>
                   )
@@ -329,17 +330,17 @@ export function ThemeSettings() {
             </div>
 
             {/* Font Size & Radius */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-0 w-full">
+              <div className="min-w-0">
                 <label className="mb-1.5 block font-medium text-xs text-foreground">UI Scaling / Font Size</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 min-w-0">
                   {fontSizes.map(size => (
                     <Button
                       key={size.id}
                       type="button"
                       variant={config.fontSize === size.id ? 'default' : 'outline'}
                       size="sm"
-                      className="h-7 text-xs cursor-pointer"
+                      className="h-auto py-1 px-2.5 text-xs min-h-7 cursor-pointer shrink-0"
                       onClick={() => setFontSize(size.id as ThemeFontSize)}
                     >
                       {size.name} ({size.label})
@@ -348,16 +349,16 @@ export function ThemeSettings() {
                 </div>
               </div>
 
-              <div>
+              <div className="min-w-0">
                 <label className="mb-1.5 block font-medium text-xs text-foreground">Corner Radius</label>
-                <div className="flex flex-wrap gap-1.5">
+                <div className="flex flex-wrap gap-1.5 min-w-0">
                   {radii.map(r => (
                     <Button
                       key={r.id}
                       type="button"
                       variant={config.radius === r.id ? 'default' : 'outline'}
                       size="sm"
-                      className="h-7 text-xs cursor-pointer"
+                      className="h-auto py-1 px-2.5 text-xs min-h-7 cursor-pointer shrink-0"
                       onClick={() => setRadius(r.id as ThemeRadius)}
                     >
                       {r.name}
@@ -370,25 +371,25 @@ export function ThemeSettings() {
             <Separator />
 
             {/* Live Preview Box */}
-            <div>
+            <div className="min-w-0 w-full overflow-hidden">
               <label className="mb-2 block font-medium text-xs text-foreground">Live Theme Preview</label>
-              <div className="rounded-2xl border border-border/80 bg-background/90 p-3.5 space-y-2.5 shadow-inner">
+              <div className="rounded-2xl border border-border/80 bg-background/90 p-3 space-y-2.5 shadow-inner min-w-0 w-full overflow-hidden">
                 {/* User bubble mock */}
-                <div className="flex justify-end">
-                  <div className="rounded-2xl rounded-br-xs bg-primary px-3.5 py-1.5 text-xs text-primary-foreground max-w-[80%] shadow-2xs">
+                <div className="flex justify-end min-w-0">
+                  <div className="rounded-2xl rounded-br-xs bg-primary px-3 py-1.5 text-xs text-primary-foreground max-w-[85%] shadow-2xs [overflow-wrap:anywhere]">
                     Show me how this theme and code formatting look.
                   </div>
                 </div>
 
                 {/* Agent bubble mock */}
-                <div className="rounded-2xl rounded-tl-xs border border-border/80 bg-card/95 p-3.5 text-card-foreground shadow-2xs max-w-[90%] space-y-1.5">
+                <div className="rounded-2xl rounded-tl-xs border border-border/80 bg-card/95 p-3 text-card-foreground shadow-2xs max-w-full min-w-0 space-y-1.5 overflow-hidden">
                   <MarkdownView
                     text={`### Live Theme Preview
 **Palette**: ${activePalette?.name} · **Font**: ${activeFont?.name}
 
 \`\`\`typescript
-const status = "Ready";
-console.log("Agent Hub theme applied seamlessly!");
+const theme = "${config.palette}";
+console.log("Agent Hub theme preview ready!");
 \`\`\`
 
 > [!NOTE]
@@ -400,7 +401,7 @@ console.log("Agent Hub theme applied seamlessly!");
             </div>
           </div>
 
-          <div className="flex justify-end border-t border-border/60 pt-3">
+          <div className="flex justify-end border-t border-border/60 pt-3 min-w-0">
             <Button type="button" onClick={() => setModalOpen(false)} className="px-5 cursor-pointer">
               Done
             </Button>

@@ -10,6 +10,10 @@ export type ThemePalette =
   | 'catppuccin'
   | 'amber'
   | 'oled'
+  | 'rose'
+  | 'forest'
+  | 'lavender'
+  | 'gruvbox'
 
 export type ThemeFont = 'geist' | 'inter' | 'jetbrains' | 'outfit' | 'jakarta' | 'system'
 export type ThemeRadius = 'none' | 'sm' | 'md' | 'lg' | 'full'
@@ -45,6 +49,10 @@ export const THEME_PALETTES: { id: ThemePalette; name: string; color: string; de
   { id: 'cyberpunk', name: 'Cyberpunk Neon', color: '#f43f5e', desc: 'Vibrant hot pink and high-contrast neon' },
   { id: 'dracula', name: 'Dracula', color: '#bd93f9', desc: 'Classic gothic dark purple & soft coral' },
   { id: 'catppuccin', name: 'Catppuccin Mocha', color: '#cba6f7', desc: 'Soothing warm palette with pastel accents' },
+  { id: 'rose', name: 'Rosé Pine', color: '#ebbcba', desc: 'Warm dusk lavender with soothing blush rose' },
+  { id: 'forest', name: 'Forest Matcha', color: '#4ade80', desc: 'Calming woodland moss with matcha green' },
+  { id: 'lavender', name: 'Midnight Lavender', color: '#c084fc', desc: 'Rich midnight navy with glowing lilac' },
+  { id: 'gruvbox', name: 'Gruvbox Retro', color: '#fe8019', desc: 'Warm retro charcoal with terracotta' },
   { id: 'amber', name: 'Sunset Amber', color: '#f59e0b', desc: 'Warm espresso bronze with glowing amber' },
   { id: 'oled', name: 'Pure OLED Black', color: '#ffffff', desc: 'True #000000 black for OLED displays' },
 ]
@@ -81,6 +89,27 @@ export const THEME_PRESETS: ThemePreset[] = [
     preview: { bg: '#0f141c', card: '#161c28', primary: '#7aa2f7', accent: '#7dcfff', text: '#c0caf5' },
   },
   {
+    id: 'rose-pine-moon',
+    name: 'Rosé Pine Moon',
+    tagline: 'Cozy dusk lavender & soothing blush rose',
+    config: { mode: 'dark', palette: 'rose', font: 'inter', radius: 'lg', fontSize: 'md' },
+    preview: { bg: '#191724', card: '#211f32', primary: '#ebbcba', accent: '#c4a7e7', text: '#e0def4' },
+  },
+  {
+    id: 'forest-matcha-dark',
+    name: 'Forest Matcha',
+    tagline: 'Earthy woodland tranquility & fresh matcha',
+    config: { mode: 'dark', palette: 'forest', font: 'geist', radius: 'md', fontSize: 'md' },
+    preview: { bg: '#0e1713', card: '#16221c', primary: '#4ade80', accent: '#86efac', text: '#e1f5eb' },
+  },
+  {
+    id: 'midnight-lavender-dark',
+    name: 'Midnight Lavender',
+    tagline: 'Deep space navy & glowing electric lilac',
+    config: { mode: 'dark', palette: 'lavender', font: 'outfit', radius: 'lg', fontSize: 'md' },
+    preview: { bg: '#0f111d', card: '#181b2c', primary: '#c084fc', accent: '#818cf8', text: '#eee9f8' },
+  },
+  {
     id: 'obsidian-zinc',
     name: 'Obsidian Minimal',
     tagline: 'Ultra-clean slate monochrome',
@@ -93,6 +122,13 @@ export const THEME_PRESETS: ThemePreset[] = [
     tagline: 'Hacker obsidian with electric green glow',
     config: { mode: 'dark', palette: 'emerald', font: 'jetbrains', radius: 'sm', fontSize: 'md' },
     preview: { bg: '#060d09', card: '#0c1a12', primary: '#10b981', accent: '#34d399', text: '#d1fae5' },
+  },
+  {
+    id: 'gruvbox-retro-dark',
+    name: 'Gruvbox Retro',
+    tagline: 'Eye-friendly warm charcoal & terracotta',
+    config: { mode: 'dark', palette: 'gruvbox', font: 'jetbrains', radius: 'sm', fontSize: 'md' },
+    preview: { bg: '#282828', card: '#32302f', primary: '#fe8019', accent: '#fabd2f', text: '#ebdbb2' },
   },
   {
     id: 'cyberpunk-neon',
@@ -137,6 +173,20 @@ export const THEME_PRESETS: ThemePreset[] = [
     preview: { bg: '#000000', card: '#111111', primary: '#ffffff', accent: '#a1a1aa', text: '#ffffff' },
   },
   {
+    id: 'rose-dawn-light',
+    name: 'Rosé Dawn (Light)',
+    tagline: 'Gentle warmth & soothing blush pastel',
+    config: { mode: 'light', palette: 'rose', font: 'inter', radius: 'md', fontSize: 'md' },
+    preview: { bg: '#faf4ed', card: '#ffffff', primary: '#b4637a', accent: '#ea9d34', text: '#575279' },
+  },
+  {
+    id: 'matcha-daylight',
+    name: 'Matcha Daylight (Light)',
+    tagline: 'Crisp morning dew & gentle forest matcha',
+    config: { mode: 'light', palette: 'forest', font: 'outfit', radius: 'lg', fontSize: 'md' },
+    preview: { bg: '#f0fdf4', card: '#ffffff', primary: '#15803d', accent: '#22c55e', text: '#143d2c' },
+  },
+  {
     id: 'light-clean',
     name: 'Clean Studio (Light)',
     tagline: 'Bright, crisp, and high-readability daylight',
@@ -149,13 +199,6 @@ export const THEME_PRESETS: ThemePreset[] = [
     tagline: 'Gentle arctic pastel daylight',
     config: { mode: 'light', palette: 'nord', font: 'outfit', radius: 'lg', fontSize: 'md' },
     preview: { bg: '#eceff4', card: '#ffffff', primary: '#5e81ac', accent: '#88c0d0', text: '#2e3440' },
-  },
-  {
-    id: 'light-amber',
-    name: 'Warm Sunlight (Light)',
-    tagline: 'Golden morning warmth and clarity',
-    config: { mode: 'light', palette: 'amber', font: 'jakarta', radius: 'full', fontSize: 'md' },
-    preview: { bg: '#fffdf5', card: '#ffffff', primary: '#d97706', accent: '#b45309', text: '#451a03' },
   },
 ]
 
@@ -203,6 +246,10 @@ const PALETTE_THEME_COLORS: Record<ThemePalette, { dark: string; light: string }
   cyberpunk: { dark: '#0d0a17', light: '#fff1f2' },
   dracula: { dark: '#191a21', light: '#f8f8f2' },
   catppuccin: { dark: '#181825', light: '#eff1f5' },
+  rose: { dark: '#191724', light: '#faf4ed' },
+  forest: { dark: '#0e1713', light: '#f0fdf4' },
+  lavender: { dark: '#0f111d', light: '#f8f6fc' },
+  gruvbox: { dark: '#282828', light: '#fbf1c7' },
   amber: { dark: '#14110e', light: '#fffdf5' },
   oled: { dark: '#000000', light: '#ffffff' },
 }
