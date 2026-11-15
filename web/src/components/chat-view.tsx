@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { ChevronLeft, GitBranch, GitMerge, MoreHorizontal, Pencil, RefreshCw, ShieldCheck, ShieldOff, Square, Trash2, Zap } from 'lucide-react'
+import { ArrowDown, ChevronLeft, GitBranch, GitMerge, MoreHorizontal, Pencil, RefreshCw, ShieldCheck, ShieldOff, Sparkles, Square, Trash2, Zap } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -25,9 +25,19 @@ export function ChatView({ id }: { id: number }) {
   const deleteChat = useDeleteChat()
   const [detail, setDetail] = useState<ChatDetail | null>(null)
   const [missing, setMissing] = useState(false)
+  const [showScrollBottom, setShowScrollBottom] = useState(false)
   const thread = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const firstLoad = useRef(true)
+
+  const scrollToBottom = () => {
+    const el = thread.current
+    if (el) {
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      stickToBottom.current = true
+      setShowScrollBottom(false)
+    }
+  }
 
   useEffect(() => { setDetail(null); setMissing(false); firstLoad.current = true; stickToBottom.current = true }, [id])
 
@@ -193,26 +203,57 @@ export function ChatView({ id }: { id: number }) {
         )}
       </header>
 
-      <ScrollArea className="min-h-0 flex-1" viewportRef={thread}
-        onViewportScroll={e => { const el = e.currentTarget; stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120 }}>
-        <div className="px-3 py-4 md:px-6">
-          <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-3">
-            {!detail && <p className="text-center text-sm text-muted-foreground">Loading…</p>}
-            {detail && !detail.runs.length && <p className="py-10 text-center text-muted-foreground">No messages yet. Say something to start.</p>}
-            {detail?.runs.map(r => {
-              const day = new Date(r.createdAt).toDateString()
-              const showDay = day !== lastDay
-              lastDay = day
-              return (
-                <div key={r.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
-                  {showDay && <div className="text-center text-xs font-medium text-muted-foreground">{dayLabel(r.createdAt)}</div>}
-                  <RunItem run={r} />
+      <div className="relative min-h-0 flex-1">
+        <ScrollArea className="h-full" viewportRef={thread}
+          onViewportScroll={e => {
+            const el = e.currentTarget
+            const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120
+            stickToBottom.current = isNearBottom
+            setShowScrollBottom(!isNearBottom && el.scrollTop > 200)
+          }}>
+          <div className="px-3 py-4 md:px-6">
+            <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-3.5">
+              {!detail && <p className="text-center text-sm text-muted-foreground py-12">Loading conversation…</p>}
+              {detail && !detail.runs.length && (
+                <div className="mx-auto my-12 max-w-md rounded-2xl border border-dashed border-border/80 bg-card/50 p-6 text-center">
+                  <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Sparkles className="size-6" />
+                  </div>
+                  <h3 className="text-base font-semibold text-foreground">
+                    Chat with {c?.agentName || 'Agent'}
+                  </h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Ask questions about the code, plan features, or tell the agent what changes to build.
+                  </p>
                 </div>
-              )
-            })}
+              )}
+              {detail?.runs.map(r => {
+                const day = new Date(r.createdAt).toDateString()
+                const showDay = day !== lastDay
+                lastDay = day
+                return (
+                  <div key={r.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
+                    {showDay && <div className="text-center text-xs font-medium text-muted-foreground/80">{dayLabel(r.createdAt)}</div>}
+                    <RunItem run={r} />
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      </ScrollArea>
+        </ScrollArea>
+
+        {showScrollBottom && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="absolute bottom-3 right-6 z-20 gap-1.5 rounded-full border border-border/80 bg-background/90 px-3.5 shadow-md backdrop-blur transition-all hover:bg-muted"
+            onClick={scrollToBottom}
+          >
+            <ArrowDown className="size-3.5" />
+            <span className="text-xs font-medium">Latest messages</span>
+          </Button>
+        )}
+      </div>
 
       <Composer
         resetKey={id}

@@ -15,6 +15,7 @@ import type { SettingsView } from '@/lib/types'
 import { useHub } from '@/hooks/use-hub'
 import { useDialogs } from '@/hooks/use-dialogs'
 import { useInstallPrompt } from '@/lib/install'
+import { ThemeSettings } from '@/components/theme-settings'
 
 export function Settings() {
   const { refresh } = useHub()
@@ -89,6 +90,8 @@ export function Settings() {
       {!s && !error && <p className="text-sm text-muted-foreground">Loading…</p>}
       {s && (
         <>
+          <ThemeSettings />
+
           <Card>
             <CardHeader>
               <CardTitle>Running agents</CardTitle>

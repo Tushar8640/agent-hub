@@ -1,12 +1,14 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { colourOf, initial } from '@/lib/format'
 import { copyText } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { MarkdownView, CodeBlock as ModernCodeBlock } from '@/components/markdown-view'
 
-// Round avatar with the agent's (or workflow's) initial in its own colour.
+// Re-export MarkdownView as Markdown
+export const Markdown = MarkdownView
+export const CodeBlock = ModernCodeBlock
 export function AgentAvatar({ id, name, size = 'md', className }: { id: string; name: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
   const sizes = { sm: 'size-7 text-xs', md: 'size-10 text-sm', lg: 'size-12 text-base' }
   const label = String(name || '?').match(/\d+$/)?.[0] || initial(name)
@@ -36,68 +38,6 @@ export function CopyButton({ text, label = 'Copy', className }: { text: string; 
       {done ? 'Copied' : label}
     </Button>
   )
-}
-
-// Code (or diff) block with a copy button in the corner.
-export function CodeBlock({ code, children, className }: { code: string; children?: ReactNode; className?: string }) {
-  return (
-    <div className="relative my-1.5 w-full min-w-0 max-w-full">
-      <CopyButton text={code} className="absolute top-1.5 right-1.5 z-10 bg-background/80 backdrop-blur" />
-      <ScrollArea scrollbars="both" fullWidth={false} className="max-w-full rounded-lg border bg-black/40" viewportClassName="max-h-[60vh]">
-        <pre className={cn('p-3 pt-9 font-mono text-xs leading-relaxed whitespace-pre', className)}>
-          {children ?? <code>{code}</code>}
-        </pre>
-      </ScrollArea>
-    </div>
-  )
-}
-
-// Very small Markdown subset: ``` code blocks, `inline code`, **bold**, # headings. Rendered as React elements
-// (no HTML injection).
-export function Markdown({ text }: { text: string }) {
-  const parts = String(text ?? '').split('```')
-  return (
-    <>
-      {parts.map((p, i) =>
-        i % 2 ? (
-          <CodeBlock key={i} code={p.replace(/^[\w+.#-]*\n/, '').replace(/\n$/, '')} />
-        ) : (
-          <InlineText key={i} text={parts.length > 1 ? p.replace(/^\n/, '').replace(/\n$/, '') : p} />
-        ),
-      )}
-    </>
-  )
-}
-
-function InlineText({ text }: { text: string }) {
-  const lines = text.split('\n')
-  return (
-    <span className="whitespace-pre-wrap">
-      {lines.map((line, li) => {
-        const heading = line.match(/^#{1,6}\s+(.+)$/)
-        const content = heading ? <strong>{inlineTokens(heading[1])}</strong> : inlineTokens(line)
-        return <span key={li}>{content}{li < lines.length - 1 ? '\n' : ''}</span>
-      })}
-    </span>
-  )
-}
-
-function inlineTokens(line: string): ReactNode[] {
-  const out: ReactNode[] = []
-  const re = /(`[^`\n]+`|\*\*[^*\n]+\*\*)/g
-  let last = 0
-  let m: RegExpExecArray | null
-  let k = 0
-  while ((m = re.exec(line))) {
-    if (m.index > last) out.push(line.slice(last, m.index))
-    const tok = m[0]
-    out.push(tok.startsWith('`')
-      ? <code key={k++} className="rounded bg-black/30 px-1 py-0.5 font-mono text-[0.85em]">{tok.slice(1, -1)}</code>
-      : <strong key={k++}>{tok.slice(2, -2)}</strong>)
-    last = m.index + tok.length
-  }
-  if (last < line.length) out.push(line.slice(last))
-  return out
 }
 
 // Unified diff with coloured lines.

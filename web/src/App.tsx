@@ -14,9 +14,11 @@ import { Dashboard } from '@/components/dashboard'
 import { Settings } from '@/components/settings'
 import { Devices } from '@/components/devices'
 import { NotPairedScreen, OfflineScreen, PairScreen } from '@/components/gate'
+import { useTheme } from '@/hooks/use-theme'
 
 // Start-up: who am I? Then pairing screen, "not paired", or the app.
 export default function App() {
+  const { config } = useTheme()
   const [me, setMe] = useState<Me | null>(null)
   const [failed, setFailed] = useState(false)
   const [unpaired, setUnpaired] = useState(false)
@@ -33,11 +35,13 @@ export default function App() {
   if (pairCode) history.replaceState(null, '', '/#/') // a pairing link opened on the PC itself
   if (!me.authed || unpaired) return <NotPairedScreen port={me.port} />
 
+  const toasterTheme = config.mode === 'light' ? 'light' : config.mode === 'dark' ? 'dark' : 'system'
+
   return (
     <HubProvider me={me}>
       <DialogsProvider>
         <Shell />
-        <Toaster theme="dark" position="bottom-center" />
+        <Toaster theme={toasterTheme} position="bottom-center" />
       </DialogsProvider>
     </HubProvider>
   )

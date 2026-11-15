@@ -3,13 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content" />
-    <meta name="theme-color" content="#0a0a0a" />
+    <meta name="theme-color" content="#09090b" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <title>Agent Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      (function() {
+        try {
+          var raw = localStorage.getItem('agent-hub:theme-config');
+          if (raw) {
+            var c = JSON.parse(raw);
+            var isDark = c.mode === 'dark' || (c.mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            var root = document.documentElement;
+            if (isDark) { root.classList.add('dark'); root.classList.remove('light'); }
+            else { root.classList.remove('dark'); root.classList.add('light'); }
+            if (c.palette) root.setAttribute('data-palette', c.palette);
+            if (c.font) root.setAttribute('data-font', c.font);
+            if (c.radius) root.setAttribute('data-radius', c.radius);
+            if (c.fontSize) root.setAttribute('data-font-size', c.fontSize);
+          }
+        } catch(e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

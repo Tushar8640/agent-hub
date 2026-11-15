@@ -26,19 +26,19 @@ export function RunItem({ run: r }: { run: Run }) {
   const cost = r.costUsd != null ? `USD ${r.costUsd.toFixed(3)}` : ''
 
   const stepsButton = r.activity.length > 0 && (
-    <Button variant="ghost" size="xs" className="text-muted-foreground" onClick={() => setShowSteps(s => !s)}>
-      {showSteps ? <ChevronDown /> : <ChevronRight />}
-      {r.activity.length} step{r.activity.length === 1 ? '' : 's'}
+    <Button variant="ghost" size="xs" className="h-6 gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted" onClick={() => setShowSteps(s => !s)}>
+      {showSteps ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+      <span>{r.activity.length} step{r.activity.length === 1 ? '' : 's'}</span>
     </Button>
   )
 
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">
+    <div className="group grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1.5 transition-all">
       {/* What was sent */}
       {wf && wf.step > 0 ? (
-        <div className="my-2 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1 rounded-full border border-dashed px-3 py-1">
-            <ArrowDown className="size-3" /> Handed to <b className="text-foreground">{r.agentName}</b> · {wf.label}
+        <div className="my-2.5 flex flex-wrap items-center justify-center gap-2 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5 rounded-full border border-dashed border-border px-3 py-1 bg-muted/30">
+            <ArrowDown className="size-3 text-primary" /> Handed to <b className="text-foreground">{r.agentName}</b> · {wf.label}
           </span>
           <Button variant="ghost" size="xs" onClick={() => setShowPrompt(s => !s)}>{showPrompt ? 'Hide' : 'What it was asked'}</Button>
         </div>
@@ -46,7 +46,7 @@ export function RunItem({ run: r }: { run: Run }) {
         <>
           {typed && (
             <div className="flex justify-end">
-              <div className="max-w-[85%] rounded-2xl rounded-br-md bg-primary px-3.5 py-2 whitespace-pre-wrap text-primary-foreground [overflow-wrap:anywhere] md:max-w-[75%]">
+              <div className="max-w-[85%] rounded-2xl rounded-br-xs bg-primary px-4 py-2.5 whitespace-pre-wrap text-[13.5px] leading-relaxed text-primary-foreground shadow-xs [overflow-wrap:anywhere] md:max-w-[75%]">
                 {typed}
               </div>
             </div>
@@ -54,37 +54,43 @@ export function RunItem({ run: r }: { run: Run }) {
           {files.length > 0 && (
             <div className="flex flex-wrap justify-end gap-1.5">
               {files.map(f => (
-                <Badge key={f.id} variant="outline" className="h-auto max-w-64 gap-1.5 py-1">
-                  <FileText /> <span className="truncate">{f.name}</span> <span className="text-muted-foreground">{fmtSize(f.size)}</span>
+                <Badge key={f.id} variant="outline" className="h-auto max-w-64 gap-1.5 py-1 bg-muted/40">
+                  <FileText className="size-3.5" /> <span className="truncate">{f.name}</span> <span className="text-muted-foreground">{fmtSize(f.size)}</span>
                 </Badge>
               ))}
             </div>
           )}
-          <div className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
-            {fmtTime(r.createdAt)} · {r.source === 'app' ? 'from phone' : 'from PC'}
+          <div className="flex items-center justify-end gap-1.5 text-[11px] text-muted-foreground/80">
+            <span>{fmtTime(r.createdAt)}</span>
+            <span>·</span>
+            <span>{r.source === 'app' ? 'from phone' : 'from PC'}</span>
             {typed && <CopyButton text={typed} />}
           </div>
         </>
       )}
-      {showPrompt && <pre className="rounded-lg border bg-muted/40 p-3 text-xs whitespace-pre-wrap">{r.prompt}</pre>}
+      {showPrompt && <pre className="rounded-xl border bg-muted/40 p-3.5 text-xs whitespace-pre-wrap">{r.prompt}</pre>}
 
       {/* The agent's side */}
       {r.status === 'awaiting' ? <ApprovalCard run={r} /> : (
-        <div className="flex min-w-0 items-end gap-2">
-          <AgentAvatar id={r.agentId} name={r.agentName} size="sm" />
+        <div className="flex min-w-0 items-start gap-2.5 pt-1">
+          <AgentAvatar id={r.agentId} name={r.agentName} size="sm" className="mt-0.5 shrink-0" />
           <AgentBubble run={r} />
         </div>
       )}
 
       {r.status !== 'awaiting' && (
-        <div className="flex flex-wrap items-center gap-x-1 pl-9 text-xs text-muted-foreground">
-          {wf && <span className="font-medium text-violet-300">Step {wf.step + 1}/{wf.steps} · {wf.label} · {r.agentName}</span>}
+        <div className="flex flex-wrap items-center gap-x-2 pl-9.5 text-[11px] text-muted-foreground">
+          {wf && <span className="font-medium text-primary">Step {wf.step + 1}/{wf.steps} · {wf.label} · {r.agentName}</span>}
           {r.status === 'running' && <Elapsed since={r.startedAt} />}
           {r.status === 'done' && r.endedAt && <span>{fmtTime(r.endedAt)}</span>}
           {took && r.status !== 'running' && <span>· {took}</span>}
           {cost && <span>· {cost}</span>}
-          {r.resolvedModel && <span>· {labelFor(r.resolvedModel)}</span>}
-          {r.status === 'done' && <CopyButton text={r.result || ''} />}
+          {r.resolvedModel && (
+            <span className="rounded-md border border-border/50 bg-muted/40 px-1.5 py-0.5 font-mono text-[10px]">
+              {labelFor(r.resolvedModel)}
+            </span>
+          )}
+          {r.status === 'done' && <CopyButton text={r.result || ''} label="Copy reply" />}
           {(r.status === 'error' || r.status === 'interrupted') && r.error && <CopyButton text={r.error} />}
           {stepsButton}
           {(r.status === 'running' || r.status === 'queued') && <StopRunButton id={r.id} label={r.status === 'queued' ? 'Cancel' : 'Stop'} />}
@@ -92,10 +98,14 @@ export function RunItem({ run: r }: { run: Run }) {
       )}
 
       {showSteps && (
-        <ScrollArea className="ml-9 min-w-0 rounded-lg border bg-muted/30" viewportClassName="max-h-[min(420px,55vh)]">
-          <div className="grid content-start gap-1 p-2.5 font-mono text-xs whitespace-pre-wrap text-muted-foreground">
+        <ScrollArea className="ml-9.5 min-w-0 rounded-xl border border-border/70 bg-muted/30 shadow-2xs" viewportClassName="max-h-[min(420px,55vh)]">
+          <div className="grid content-start gap-1 p-3 font-mono text-xs whitespace-pre-wrap text-muted-foreground">
             {r.activity.map((a, i) => (
-              <div key={i} className="[overflow-wrap:anywhere]"><span className="mr-2 opacity-60">{fmtTime(a.at)}</span>{a.icon} {a.text}</div>
+              <div key={i} className="flex items-start gap-2 [overflow-wrap:anywhere]">
+                <span className="shrink-0 text-[11px] opacity-60 tabular-nums">{fmtTime(a.at)}</span>
+                <span className="shrink-0">{a.icon}</span>
+                <span className="flex-1 text-foreground/90">{a.text}</span>
+              </div>
             ))}
           </div>
         </ScrollArea>
@@ -107,23 +117,52 @@ export function RunItem({ run: r }: { run: Run }) {
 }
 
 function AgentBubble({ run: r }: { run: Run }) {
-  const base = 'min-w-0 max-w-[88%] rounded-2xl rounded-bl-md px-3.5 py-2 [overflow-wrap:anywhere] md:max-w-[75%]'
-  if (r.status === 'queued') return <div className={cn(base, 'bg-muted italic text-muted-foreground')}>Waiting for its turn…</div>
-  if (r.status === 'running') {
-    const last = r.activity[r.activity.length - 1]
+  const base = 'min-w-0 max-w-[92%] rounded-2xl rounded-tl-xs px-4 py-3 [overflow-wrap:anywhere] md:max-w-[82%]'
+  if (r.status === 'queued') {
     return (
-      <div className={cn(base, 'flex items-center gap-2.5 bg-muted')}>
-        <span className="flex gap-1">
-          {[0, 1, 2].map(i => <span key={i} className="size-1.5 animate-bounce rounded-full bg-muted-foreground" style={{ animationDelay: `${i * 0.15}s` }} />)}
-        </span>
-        <span className="truncate font-mono text-xs text-muted-foreground">{last ? `${last.icon} ${last.text}` : 'Thinking…'}</span>
+      <div className={cn(base, 'border border-dashed border-border/80 bg-muted/40 italic text-muted-foreground flex items-center gap-2')}>
+        <span className="size-2 rounded-full bg-amber-400 animate-pulse" />
+        <span>Waiting in queue for its turn…</span>
       </div>
     )
   }
-  if (r.status === 'done') return <div className={cn(base, 'bg-muted')}><Markdown text={r.result || '(no text reply)'} /></div>
-  if (r.status === 'aborted') return <div className={cn(base, 'bg-muted italic text-muted-foreground')}>Stopped.</div>
+  if (r.status === 'running') {
+    const last = r.activity[r.activity.length - 1]
+    return (
+      <div className={cn(base, 'border border-border/80 bg-card shadow-xs')}>
+        <div className="flex items-center gap-3">
+          <span className="flex gap-1">
+            {[0, 1, 2].map(i => (
+              <span
+                key={i}
+                className="size-1.5 animate-bounce rounded-full bg-primary"
+                style={{ animationDelay: `${i * 0.15}s` }}
+              />
+            ))}
+          </span>
+          <span className="truncate font-mono text-xs text-foreground/80">
+            {last ? `${last.icon} ${last.text}` : 'Thinking & preparing response…'}
+          </span>
+        </div>
+      </div>
+    )
+  }
+  if (r.status === 'done') {
+    return (
+      <div className={cn(base, 'border border-border/80 bg-card/95 shadow-xs text-card-foreground')}>
+        <Markdown text={r.result || '(no text reply)'} />
+      </div>
+    )
+  }
+  if (r.status === 'aborted') {
+    return <div className={cn(base, 'border border-border/60 bg-muted/50 italic text-muted-foreground')}>Stopped.</div>
+  }
   const msg = r.error || (r.status === 'interrupted' ? 'Interrupted: the hub restarted while this was running. Send it again to retry.' : 'Failed.')
-  return <div className={cn(base, 'border border-red-500/40 bg-red-500/10 font-mono text-xs whitespace-pre-wrap text-red-200')}>{msg}</div>
+  return (
+    <div className={cn(base, 'border border-red-500/40 bg-red-500/10 font-mono text-xs whitespace-pre-wrap text-red-200')}>
+      {msg}
+    </div>
+  )
 }
 
 function Elapsed({ since }: { since: number | null }) {
