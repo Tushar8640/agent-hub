@@ -3,6 +3,7 @@ import { ChevronLeft, GitBranch, GitMerge, MoreHorizontal, Pencil, RefreshCw, Sh
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Switch } from '@/components/ui/switch'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger,
@@ -192,24 +193,26 @@ export function ChatView({ id }: { id: number }) {
         )}
       </header>
 
-      <div ref={thread} className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-4 md:px-6"
-        onScroll={e => { const el = e.currentTarget; stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120 }}>
-        <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-3">
-          {!detail && <p className="text-center text-sm text-muted-foreground">Loading…</p>}
-          {detail && !detail.runs.length && <p className="py-10 text-center text-muted-foreground">No messages yet. Say something to start.</p>}
-          {detail?.runs.map(r => {
-            const day = new Date(r.createdAt).toDateString()
-            const showDay = day !== lastDay
-            lastDay = day
-            return (
-              <div key={r.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
-                {showDay && <div className="text-center text-xs font-medium text-muted-foreground">{dayLabel(r.createdAt)}</div>}
-                <RunItem run={r} />
-              </div>
-            )
-          })}
+      <ScrollArea className="min-h-0 flex-1" viewportRef={thread}
+        onViewportScroll={e => { const el = e.currentTarget; stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 120 }}>
+        <div className="px-3 py-4 md:px-6">
+          <div className="mx-auto grid w-full max-w-4xl grid-cols-[minmax(0,1fr)] gap-3">
+            {!detail && <p className="text-center text-sm text-muted-foreground">Loading…</p>}
+            {detail && !detail.runs.length && <p className="py-10 text-center text-muted-foreground">No messages yet. Say something to start.</p>}
+            {detail?.runs.map(r => {
+              const day = new Date(r.createdAt).toDateString()
+              const showDay = day !== lastDay
+              lastDay = day
+              return (
+                <div key={r.id} className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-3">
+                  {showDay && <div className="text-center text-xs font-medium text-muted-foreground">{dayLabel(r.createdAt)}</div>}
+                  <RunItem run={r} />
+                </div>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      </ScrollArea>
 
       <Composer
         resetKey={id}

@@ -28,6 +28,7 @@ while ($true) {
     } else { Log 'web\node_modules missing - run "npm install" in the agent-hub folder' }
 
     Log "starting: $node --import tsx hub/index.ts"
+    $env:AGENT_HUB_SUPERVISED = '1'
     $p = Start-Process -FilePath $node -ArgumentList '--import tsx hub/index.ts' -WorkingDirectory $dir -WindowStyle Hidden -PassThru `
          -RedirectStandardOutput (Join-Path $logs 'hub.log') -RedirectStandardError (Join-Path $logs 'hub-error.log')
     $p.Id | Set-Content -Path (Join-Path $logs 'hub.pid')

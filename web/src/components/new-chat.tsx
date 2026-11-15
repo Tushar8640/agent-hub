@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { AgentAvatar } from '@/components/common'
 import { Composer } from '@/components/composer'
 import { errorText, post } from '@/lib/api'
@@ -119,8 +120,9 @@ export function NewChat() {
         </div>
       </header>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-4 md:px-6">
-        <div className="mx-auto grid max-w-3xl gap-3">
+      <ScrollArea className="min-h-0 flex-1">
+        <div className="px-3 py-4 md:px-6">
+          <div className="mx-auto grid max-w-3xl gap-3">
           <SectionLabel>Agent</SectionLabel>
           <div className="grid gap-2 sm:grid-cols-2">
             {agents.map(a => (
@@ -254,6 +256,7 @@ export function NewChat() {
           {status && <p className="text-xs text-muted-foreground">{status}</p>}
         </div>
       </div>
+    </ScrollArea>
 
       <Composer
         agentId={kind === 'agent' ? targetId || undefined : undefined}

@@ -21,7 +21,7 @@ Pair the phone by QR code; the app can be installed to the home screen (PWA).
    npm install
    npm start
    ```
-   The first start creates `config.yaml` from `config.example.yaml`.
+   The first start creates `config.yaml` from `config.example.yaml`. The first `npm start` also sets the hub to start automatically when you log in to Windows (`autostart` in `config.yaml`).
 3. Edit `config.yaml`: set `projectRoots` (and any `projects`) to folders on this PC, then restart (`Ctrl+C`, `npm start`).
 4. On the PC open **http://localhost:8650** → **Devices → Show pairing QR code**, and scan it with the phone
    (same Wi-Fi, or Tailscale).
@@ -35,6 +35,10 @@ scripts\start.bat     # run in the background (restarts on crash)
 scripts\stop.bat      # stop
 powershell -ExecutionPolicy Bypass -File scripts\install-autostart.ps1   # start at login
 ```
+
+- The hub starts after Windows **login**, not at power-on while the PC waits at the login screen.
+- `scripts\stop.bat` stops the hub until the next login. To remove autostart completely, set `autostart: false` in `config.yaml` and run `npm start` (or run `scripts\install-autostart.ps1 -Remove`).
+- Restart hub in Settings also works after `npm start`: the hub keeps running in the background without a window, writes its output to `logs\hub.log`, and stops with `scripts\stop.bat`.
 
 Logs: `logs\`. Settings and agents: `config.yaml` (see comments in `config.example.yaml`).
 

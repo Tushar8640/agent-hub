@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import { AgentAvatar, CopyButton, DiffView, Markdown } from '@/components/common'
 import { errorText, getText, post } from '@/lib/api'
@@ -91,11 +92,13 @@ export function RunItem({ run: r }: { run: Run }) {
       )}
 
       {showSteps && (
-        <div className="ml-9 grid min-w-0 max-h-[min(420px,55vh)] content-start gap-1 overflow-y-auto rounded-lg border bg-muted/30 p-2.5 font-mono text-xs whitespace-pre-wrap text-muted-foreground">
-          {r.activity.map((a, i) => (
-            <div key={i} className="[overflow-wrap:anywhere]"><span className="mr-2 opacity-60">{fmtTime(a.at)}</span>{a.icon} {a.text}</div>
-          ))}
-        </div>
+        <ScrollArea className="ml-9 min-w-0 rounded-lg border bg-muted/30" viewportClassName="max-h-[min(420px,55vh)]">
+          <div className="grid content-start gap-1 p-2.5 font-mono text-xs whitespace-pre-wrap text-muted-foreground">
+            {r.activity.map((a, i) => (
+              <div key={i} className="[overflow-wrap:anywhere]"><span className="mr-2 opacity-60">{fmtTime(a.at)}</span>{a.icon} {a.text}</div>
+            ))}
+          </div>
+        </ScrollArea>
       )}
 
       {r.changes && <Changes run={r} />}

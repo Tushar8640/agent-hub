@@ -3,6 +3,7 @@ import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { spawn } from 'node:child_process';
 import QRCode from 'qrcode';
 import { ROOT, loadConfig } from './config.js';
 import crypto from 'node:crypto';
@@ -13,7 +14,10 @@ import { createRunner, isActive } from './runner.js';
 import { createWorktree, isRepo, mergeBranch, pendingChanges, removeWorktree, reverseApply, revertCommit } from './git.js';
 import { clip, errorMessage, lanAddresses, log } from './util.js';
 import { discover, insideRoots, mergeProjects } from './projects.js';
+import { ensureAutostart } from './autostart.js';
 import type { Agent, AntigravityGroup, Attachment, Chat, Project, Run, SystemStats, UsageWindow, Workflow } from './types.js';
+
+const supervised = process.env.AGENT_HUB_SUPERVISED === '1';
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const MAX_ATTACHMENTS = 10;
@@ -616,12 +620,12 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
     return json(res, 200, { ok: true });
   }
   if (p === '/api/hub/restart') {
-    // Exits; the supervisor (scripts\start.bat / autostart) starts the hub again about 15 seconds later.
+    // Supervised: exits and the supervisor starts the hub again. Otherwise spawns a background copy before exiting.
     if (db.runs.some(r => r.status === 'running')) return json(res, 409, { error: 'Agents are working. Stop them first, or wait.' });
     saveNow();
-    json(res, 200, { ok: true });
+    json(res, 200, { ok: true, supervised });
     log('restart requested from the app');
-    setTimeout(() => process.exit(0), 300);
+    setTimeout(restartHub, 300);
     return;
   }
   const source = device ? 'app' as const : 'pc' as const;
@@ -815,15 +819,50 @@ const server = http.createServer((req, res) => {
   });
 });
 
+let bindRetries = 0;
 server.on('error', (e: NodeJS.ErrnoException) => {
-  log(e.code === 'EADDRINUSE' ? `port ${config.port} is already in use - is the hub already running?` : `server error: ${e.message}`);
+  if (process.env.AGENT_HUB_RESPAWNED === '1' && e.code === 'EADDRINUSE' && bindRetries < 20) {
+    bindRetries++;
+    setTimeout(() => server.listen(config.port, config.host), 500);
+    return;
+  }
+  log(e.code === 'EADDRINUSE'
+    ? `Agent Hub is already running (probably started automatically at login). Open http://localhost:${config.port}. To stop it: scripts\\stop.bat`
+    : `server error: ${e.message}`);
   process.exit(1);
 });
 
-server.listen(config.port, config.host, () => {
+server.on('listening', () => {
   log(`${config.name} running: http://localhost:${config.port}`);
   log('Open that address on this PC, then Devices -> Pair a phone.');
+  if (!supervised) ensureAutostart(config.autostart);
 });
+
+server.listen(config.port, config.host);
+
+function restartHub() {
+  saveNow();
+  for (const r of sseClients) r.end();            // let the server close
+  sseClients.clear();
+  server.closeAllConnections?.();
+  server.close(() => {
+    if (!supervised) {
+      const logs = path.join(ROOT, 'logs');
+      fs.mkdirSync(logs, { recursive: true });
+      const out = fs.openSync(path.join(logs, 'hub.log'), 'a');
+      const err = fs.openSync(path.join(logs, 'hub-error.log'), 'a');
+      const child = spawn(process.execPath, ['--import', 'tsx', 'hub/index.ts'], {
+        cwd: ROOT, detached: true, windowsHide: true, stdio: ['ignore', out, err],
+        env: { ...process.env, AGENT_HUB_RESPAWNED: '1' },
+      });
+      if (child.pid) fs.writeFileSync(path.join(logs, 'hub.pid'), String(child.pid));
+      child.unref();
+      log(`restarting: new hub process ${child.pid}`);
+    }
+    process.exit(0);
+  });
+  setTimeout(() => process.exit(0), 5000).unref(); // safety net if close() hangs
+}
 
 const shutdown = () => { saveNow(); process.exit(0); };
 process.on('SIGINT', shutdown);

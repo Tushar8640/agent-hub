@@ -140,6 +140,7 @@ export interface HubConfig {
   projects: Project[];
   agents: AgentConfig[];
   workflows: Workflow[];
+  autostart: boolean;
 }
 
 export interface AgentModel {

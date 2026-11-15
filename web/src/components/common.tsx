@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { colourOf, initial } from '@/lib/format'
 import { copyText } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 // Round avatar with the agent's (or workflow's) initial in its own colour.
 export function AgentAvatar({ id, name, size = 'md', className }: { id: string; name: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
@@ -42,9 +43,11 @@ export function CodeBlock({ code, children, className }: { code: string; childre
   return (
     <div className="relative my-1.5 w-full min-w-0 max-w-full">
       <CopyButton text={code} className="absolute top-1.5 right-1.5 z-10 bg-background/80 backdrop-blur" />
-      <pre className={cn('max-h-[60vh] max-w-full overflow-auto rounded-lg border bg-black/40 p-3 pt-9 font-mono text-xs leading-relaxed whitespace-pre', className)}>
-        {children ?? <code>{code}</code>}
-      </pre>
+      <ScrollArea scrollbars="both" fullWidth={false} className="max-w-full rounded-lg border bg-black/40" viewportClassName="max-h-[60vh]">
+        <pre className={cn('p-3 pt-9 font-mono text-xs leading-relaxed whitespace-pre', className)}>
+          {children ?? <code>{code}</code>}
+        </pre>
+      </ScrollArea>
     </div>
   )
 }

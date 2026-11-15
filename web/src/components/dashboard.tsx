@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { AgentAvatar, UsageBar } from '@/components/common'
 import { Page } from '@/components/page'
@@ -123,7 +124,7 @@ function AgentCard({ agent: a, now, onChanged }: { agent: AgentDash; now: number
           </div>
           <Usage agent={a} now={now} />
         </div>
-        <div className="overflow-x-auto">
+        <ScrollArea scrollbars="horizontal" fullWidth={false}>
           <Table>
             <TableHeader>
               <TableRow>
@@ -136,7 +137,7 @@ function AgentCard({ agent: a, now, onChanged }: { agent: AgentDash; now: number
               <StatRow label="7 days" s={a.week} />
             </TableBody>
           </Table>
-        </div>
+        </ScrollArea>
         <p className="text-xs text-muted-foreground">
           Saved sessions in {a.chats} chat{a.chats === 1 ? '' : 's'}
           {a.lastUsedAt ? ` · last used ${listTime(a.lastUsedAt)} ${fmtTime(a.lastUsedAt)}` : ''}
@@ -207,7 +208,9 @@ function Usage({ agent: a, now }: { agent: AgentDash; now: number }) {
   if (u?.text) {
     return (
       <>
-        <pre className="max-h-80 overflow-auto rounded-lg border bg-black/40 p-3 font-mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere]">{u.text}</pre>
+        <ScrollArea className="rounded-lg border bg-black/40" viewportClassName="max-h-80">
+          <pre className="p-3 font-mono text-xs whitespace-pre-wrap [overflow-wrap:anywhere]">{u.text}</pre>
+        </ScrollArea>
         <p className="text-xs text-muted-foreground">From <code>{u.source || 'the agent'}</code> · updated {listTime(u.updatedAt)} {fmtTime(u.updatedAt)}</p>
       </>
     )

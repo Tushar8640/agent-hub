@@ -61,6 +61,7 @@ export function loadConfig(): HubConfig {
     projects: [],
     agents: [],
     workflows: [],
+    autostart: raw.autostart !== false,
   };
 
   const rawRoots = Array.isArray(raw.projectRoots)

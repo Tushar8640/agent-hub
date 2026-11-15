@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { AgentAvatar } from '@/components/common'
 import { useHub } from '@/hooks/use-hub'
 import { useRoute, go } from '@/hooks/use-route'
@@ -51,17 +52,19 @@ export function Sidebar() {
         <Input type="search" placeholder="Search chats" value={q} onChange={e => setQ(e.target.value)} className="rounded-full" />
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-x-hidden overflow-y-auto px-2 pb-2">
-        {!chats.length && (
-          <p className="px-4 py-10 text-center text-sm text-muted-foreground">
-            {q ? 'No chats match.' : <>No chats yet.<br />Tap + to start one.</>}
-          </p>
-        )}
-        {chats.map(c => (
-          <ChatItem key={c.id} chat={c} active={route.name === 'chat' && route.id === c.id}
-            onDelete={async () => { if (await deleteChat(c) && route.name === 'chat' && route.id === c.id) go('#/') }} />
-        ))}
-      </nav>
+      <ScrollArea className="min-h-0 flex-1">
+        <nav className="px-2 pb-2">
+          {!chats.length && (
+            <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+              {q ? 'No chats match.' : <>No chats yet.<br />Tap + to start one.</>}
+            </p>
+          )}
+          {chats.map(c => (
+            <ChatItem key={c.id} chat={c} active={route.name === 'chat' && route.id === c.id}
+              onDelete={async () => { if (await deleteChat(c) && route.name === 'chat' && route.id === c.id) go('#/') }} />
+          ))}
+        </nav>
+      </ScrollArea>
 
       <div className="grid gap-2 border-t px-3 py-2.5 text-xs text-muted-foreground">
         {canInstall ? (

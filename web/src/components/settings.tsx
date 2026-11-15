@@ -60,11 +60,27 @@ export function Settings() {
   const restart = async () => {
     if (!await confirm({
       title: 'Restart the hub?',
-      description: 'It is back in about 20 seconds. This works when the hub was started with scripts\\start.bat or autostart.',
+      description: 'The hub restarts and is back in a few seconds. Running agents must be stopped first.',
       confirmText: 'Restart',
     })) return
-    try { await post('/api/hub/restart'); toast.success('Restarting… reconnecting in about 20 seconds') }
-    catch (e) { toast.error(errorText(e, 'Could not restart.')) }
+    try {
+      const res = await post<{ ok: boolean; supervised?: boolean }>('/api/hub/restart')
+      toast.success(res.supervised ? 'Restarting… reconnecting in about 20 seconds' : 'Restarting… reconnecting in a few seconds')
+      const deadline = Date.now() + 60000
+      while (Date.now() < deadline) {
+        await new Promise(r => setTimeout(r, 2000))
+        try {
+          await getJSON('/api/me')
+          location.reload()
+          return
+        } catch {
+          // still restarting
+        }
+      }
+      toast.error('The hub did not come back. Start it on the PC with scripts\\start.bat.')
+    } catch (e) {
+      toast.error(errorText(e, 'Could not restart.'))
+    }
   }
 
   return (

@@ -12,6 +12,10 @@ publicUrl:
 maxParallel: 3          # chats that can work at the same time; extra messages wait in a queue
 runTimeoutMinutes: 20   # a single message is stopped after this long
 
+# Windows: start the hub automatically when you log in (registers the task "Agent Hub Supervisor" on first start).
+# Set to false to remove that task.
+autostart: true
+
 # Folders the hub searches for projects (2 levels deep). Only folders here (or under them) can be used.
 projectRoots:
   - C:\Users\you\projects   # change to your folders
