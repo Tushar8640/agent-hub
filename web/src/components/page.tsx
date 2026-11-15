@@ -17,7 +17,7 @@ export function Page({ title, subtitle, actions, children }: { title: string; su
       </header>
       <ScrollArea className="min-h-0 flex-1">
         <div className="px-3 py-4 md:px-6">
-          <div className="mx-auto grid max-w-4xl min-w-0 gap-4">{children}</div>
+          <div className="mx-auto grid w-full max-w-4xl min-w-0 grid-cols-[minmax(0,1fr)] gap-4">{children}</div>
         </div>
       </ScrollArea>
     </div>
