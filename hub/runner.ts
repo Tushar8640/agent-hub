@@ -6,7 +6,8 @@
 //   without a branch, against a snapshot taken just before the run. The diff is saved so it can be shown and undone.
 import fs from 'node:fs';
 import path from 'node:path';
-import { db, changed, DIFF_DIR } from './store.js';
+import crypto from 'node:crypto';
+import { db, changed, DIFF_DIR, IMAGE_DIR } from './store.js';
 import { errorMessage } from './util.js';
 import { insideRoots } from './projects.js';
 import { changedFiles, checkpoint, diffText, snapshot, untrackedFiles } from './git.js';
@@ -14,6 +15,10 @@ import type { Agent, Attachment, Chat, Project, Run, RunChanges, RunHandle, RunR
 
 const KEEP_ACTIVITY = 40;
 const MAX_HANDOFF = 24_000; // longest previous reply passed on to the next step
+const MAX_IMAGES_PER_RUN = 40;
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+// Only raster formats a browser shows safely as <img>. SVG is excluded: it can carry script.
+const IMAGE_EXT: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
 
 export const formatSize = (n: number) =>
   n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${(n / 1024).toFixed(0)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`;
@@ -50,6 +55,7 @@ export function createRunner(o: RunnerOptions): Runner {
   const findChat = (id: number) => db.chats.find(c => c.id === id);
 
   fs.mkdirSync(DIFF_DIR, { recursive: true });
+  fs.mkdirSync(IMAGE_DIR, { recursive: true });
 
   // Anything that was working when the hub stopped cannot be continued. Steps awaiting approval can.
   for (const r of db.runs) if (r.status === 'running' || r.status === 'queued') { r.status = 'interrupted'; r.endedAt ??= Date.now(); }
@@ -57,6 +63,19 @@ export function createRunner(o: RunnerOptions): Runner {
   function addActivity(run: Run, icon: string, text: string) {
     run.activity.push({ at: Date.now(), icon, text: String(text).replace(/\s+/g, ' ').slice(0, 300) });
     if (run.activity.length > KEEP_ACTIVITY) run.activity.splice(0, run.activity.length - KEEP_ACTIVITY);
+    changed();
+  }
+
+  function addImage(run: Run, img: { name: string; type: string; data: Buffer }) {
+    const ext = IMAGE_EXT[img.type];
+    if (!ext || !img.data.length || img.data.length > MAX_IMAGE_BYTES) return;
+    run.images ??= [];
+    if (run.images.length >= MAX_IMAGES_PER_RUN) return;
+    const id = crypto.randomUUID().slice(0, 12);
+    const file = path.join(IMAGE_DIR, `run-${run.id}-${id}.${ext}`);
+    try { fs.writeFileSync(file, img.data); } catch { return; }
+    const name = String(img.name || `image.${ext}`).replace(/[\u0000-\u001f]/g, '').slice(0, 120);
+    run.images.push({ id, name, type: img.type, size: img.data.length, at: Date.now(), path: file });
     changed();
   }
 
@@ -216,6 +235,7 @@ export function createRunner(o: RunnerOptions): Runner {
         onActivity: (icon, text) => addActivity(run, icon, text),
         onSession: id => { chat.sessions[agent.id] = id; run.sessionId = id; changed(); },
         onUsage: raw => o.onUsage(agent.id, raw),
+        onImage: img => addImage(run, img),
       });
     } catch (e) {
       handle = { abort() {}, done: Promise.resolve({ error: errorMessage(e) }) };

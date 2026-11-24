@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import QRCode from 'qrcode';
 import { ROOT, loadConfig } from './config.js';
 import crypto from 'node:crypto';
-import { db, loadStore, changed, onChange, saveNow, UPLOAD_DIR, BRANCH_DIR, pruneUploads, removeUploads } from './store.js';
+import { db, loadStore, changed, onChange, saveNow, UPLOAD_DIR, BRANCH_DIR, pruneUploads, removeUploads, removeRunFiles } from './store.js';
 import { DEVICE_COOKIE, deviceForRequest, isLocalRequest, newPairingCode, publicDevice, redeemPairing, revokeDevice } from './auth.js';
 import { buildAgents } from './adapters/index.js';
 import { createRunner, isActive } from './runner.js';
@@ -165,6 +165,17 @@ function send(res: http.ServerResponse, code: number, body: string | Buffer, hea
   res.writeHead(code, { ...SECURITY_HEADERS, 'Content-Type': 'text/plain; charset=utf-8', ...headers });
   res.end(body);
 }
+// Raster images only (no SVG, which can carry script). Uploaded types come from the client, so they are
+// checked against this list and the file is served sandboxed with nosniff.
+const SAFE_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
+function sendImage(res: http.ServerResponse, file: string, type: string) {
+  if (!SAFE_IMAGE_TYPES.has(type) || !fs.existsSync(file)) return json(res, 404, { error: 'Image not found.' });
+  return send(res, 200, fs.readFileSync(file), {
+    'Content-Type': type,
+    'Cache-Control': 'private, max-age=86400',
+    'Content-Security-Policy': "default-src 'none'; sandbox",
+  });
+}
 const json = (res: http.ServerResponse, code: number, obj: unknown) =>
   send(res, code, JSON.stringify(obj), { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
 
@@ -315,8 +326,9 @@ const publicWorkflow = (w: Workflow) => {
   };
 };
 // The app never needs PC file paths: attachments go out as name/size/type only.
-const publicRun = ({ aborted, timedOut, attachments, changes, ...r }: Run) => ({
+const publicRun = ({ aborted, timedOut, attachments, changes, images, ...r }: Run) => ({
   ...r,
+  images: (images || []).map(i => ({ id: i.id, name: i.name, type: i.type, size: i.size, at: i.at })),
   attachments: (attachments || []).map(a => ({ id: a.id, name: a.name, size: a.size, type: a.type })),
   changes: changes ? {
     mode: changes.mode, files: changes.files, commit: changes.commit || null, truncated: !!changes.truncated,
@@ -530,6 +542,22 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
     const file = run?.changes?.patchFile;
     if (!file || !fs.existsSync(file)) return json(res, 404, { error: 'No saved changes for this message.' });
     return send(res, 200, fs.readFileSync(file), { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+  }
+
+  // An image an agent looked at during a run.
+  const imageGet = p.match(/^\/api\/runs\/(\d+)\/images\/([\w-]+)$/);
+  if (imageGet && req.method === 'GET') {
+    const img = db.runs.find(r => r.id === Number(imageGet[1]))?.images?.find(i => i.id === imageGet[2]);
+    if (!img) return json(res, 404, { error: 'Image not found.' });
+    return sendImage(res, img.path, img.type);
+  }
+
+  // Preview of an uploaded image attachment.
+  const uploadGet = p.match(/^\/api\/uploads\/([\w-]+)$/);
+  if (uploadGet && req.method === 'GET') {
+    const up = db.uploads.find(u => u.id === uploadGet[1]);
+    if (!up || !SAFE_IMAGE_TYPES.has(up.type)) return json(res, 404, { error: 'No preview for this file.' });
+    return sendImage(res, up.path, up.type);
   }
 
   // ---- PC-only: pairing and devices ----
@@ -821,7 +849,7 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse) {
         try { await removeWorktree(project.path, chat.branch.path, chat.branch.name); }
         catch (e) { return json(res, 500, { error: `Could not remove the chat's branch: ${errorMessage(e)}` }); }
       }
-      for (const r of chatRuns(chat.id)) if (r.changes?.patchFile) fs.rm(r.changes.patchFile, { force: true }, () => {});
+      for (const r of chatRuns(chat.id)) removeRunFiles(r);
       db.chats = db.chats.filter(c => c.id !== chat.id);
       removeUploads(u => u.chatId === chat.id);
       changed();

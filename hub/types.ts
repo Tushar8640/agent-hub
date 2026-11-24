@@ -26,6 +26,10 @@ export interface RunChanges {
   error?: string;
 }
 
+// An image the agent looked at during a run (e.g. a screenshot it read). Saved in data/run-images;
+// `path` never leaves the PC, the app loads it through /api/runs/:id/images/:imageId.
+export interface RunImage { id: string; name: string; type: string; size: number; at: number; path: string }
+
 export interface Run {
   id: number;
   chatId: number;
@@ -50,6 +54,7 @@ export interface Run {
   tokensOut: number | null;
   sessionId: string | null;
   activity: Activity[];
+  images?: RunImage[];
   aborted?: boolean;
   timedOut?: boolean;
 }
@@ -162,6 +167,7 @@ export interface StartOptions {
   skipPermissions?: boolean; // this chat runs without permission checks (--dangerously-skip-permissions)
   extraDirs?: string[]; // folders outside the project the agent may read (uploaded files)
   onUsage?: (raw: Record<string, unknown>) => void; // plan usage limits, when the agent reports them
+  onImage?: (image: { name: string; type: string; data: Buffer }) => void; // an image the agent looked at
 }
 
 export interface RunResult {

@@ -36,6 +36,14 @@ import { getResolved, recordResolved, timeAgo } from '../models.js';
 
 const MAX_PROMPT = 30_000; // Windows command lines are limited to ~32k characters
 const MAX_OUTPUT = 400_000;
+const MAX_IMAGE_BYTES = 15 * 1024 * 1024;
+const IMAGE_MIME: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+};
 
 export const ANTIGRAVITY_MODELS: AgentModel[] = [
   { id: 'gemini-3.8-flash-high', label: 'Gemini 3.8 Flash (High)' },
@@ -215,7 +223,7 @@ const antigravity: AdapterFactory = cfg => {
         });
       });
     },
-    start({ prompt, cwd, sessionId, model: runModel, onActivity, onSession, skipPermissions: chatSkip, extraDirs }: StartOptions) {
+    start({ prompt, cwd, sessionId, model: runModel, onActivity, onSession, onImage, skipPermissions: chatSkip, extraDirs }: StartOptions) {
       if (prompt.length > MAX_PROMPT) {
         return { abort() {}, done: Promise.resolve({ error: `The message is too long for the agy command line (${prompt.length} characters, limit ${MAX_PROMPT}).` }) };
       }
@@ -252,6 +260,44 @@ const antigravity: AdapterFactory = cfg => {
       const emitActivity = (icon: string, text: string) => {
         lastActivityAt = Date.now();
         onActivity(icon, text);
+      };
+
+      // Deduplicated image emission: mirrors Claude Code adapter's onImage support so screenshots
+      // Antigravity reads or references appear live in the chat's ImageGallery.
+      const seenImages = new Set<string>();
+      const emitImageFromPath = (rawPath: string) => {
+        if (!onImage || !rawPath) return;
+        let cleaned = rawPath.trim().replace(/^["']|["']$/g, '');
+        if (/^file:\/\//i.test(cleaned)) {
+          cleaned = cleaned.replace(/^file:\/\//i, '');
+          try { cleaned = decodeURIComponent(cleaned); } catch {}
+          // Windows file:///C:/... -> C:/...
+          if (/^\/[a-zA-Z]:[\\/]/.test(cleaned)) cleaned = cleaned.slice(1);
+        }
+        const ext = path.extname(cleaned).toLowerCase();
+        const mime = IMAGE_MIME[ext];
+        if (!mime) return;
+        const resolved = path.isAbsolute(cleaned) ? cleaned : path.resolve(cwd, cleaned);
+        const dedupeKey = resolved.toLowerCase();
+        if (seenImages.has(dedupeKey)) return;
+        try {
+          const stat = fs.statSync(resolved);
+          if (!stat.isFile() || stat.size === 0 || stat.size > MAX_IMAGE_BYTES) return;
+          const data = fs.readFileSync(resolved);
+          seenImages.add(dedupeKey);
+          onImage({ name: path.basename(resolved), type: mime, data });
+        } catch {}
+      };
+
+      const emitImagesFromMarkdown = (markdown: string) => {
+        if (!onImage || !markdown) return;
+        const imgRe = /!\[[^\]]*\]\(([^)]+)\)/g;
+        let m: RegExpExecArray | null;
+        while ((m = imgRe.exec(markdown)) !== null) {
+          const target = m[1].trim();
+          if (/^https?:\/\//i.test(target)) continue;
+          emitImageFromPath(target);
+        }
       };
 
       emitActivity('🚀', 'Antigravity started');
@@ -356,6 +402,11 @@ const antigravity: AdapterFactory = cfg => {
                 emitActivity('🔧', `${toolName || 'tool'}${target ? ': ' + target : ''}`);
               }
               if (isDone(state)) {
+                const p = toolInfo.parameters || toolInfo.args || {};
+                const fileParam = p.Path || p.path || p.AbsolutePath || p.file_path || p.TargetFile;
+                if (typeof fileParam === 'string' && fileParam.trim()) {
+                  emitImageFromPath(fileParam);
+                }
                 const err = toolInfo.error || step.error || null;
                 if (err) emitActivity('⚠️', String(typeof err === 'string' ? err : JSON.stringify(err)).slice(0, 120));
               }
@@ -444,6 +495,7 @@ const antigravity: AdapterFactory = cfg => {
             }
             if (final.status === 'SUCCESS' || (!final.status && final.response)) {
               res.text = String(final.response ?? '') || '(no text reply)';
+              emitImagesFromMarkdown(res.text);
             } else {
               res.error = String(final.response || stderr.trim().slice(-1500) || `Antigravity exited with code ${code}`);
             }
@@ -459,9 +511,13 @@ const antigravity: AdapterFactory = cfg => {
               onSession(parsed.conversation_id);
             }
             if (parsed?.usage && typeof parsed.usage.total_tokens === 'number') res.tokensOut = parsed.usage.total_tokens;
-            if (code === 0 && parsed) res.text = String(parsed.response ?? '') || '(no text reply)';
-            else if (code === 0 && raw) res.text = raw;
-            else {
+            if (code === 0 && parsed) {
+              res.text = String(parsed.response ?? '') || '(no text reply)';
+              emitImagesFromMarkdown(res.text);
+            } else if (code === 0 && raw) {
+              res.text = raw;
+              emitImagesFromMarkdown(res.text);
+            } else {
               res.error = stderr.trim().slice(-1500) || raw.slice(-1500) || `Antigravity exited with code ${code}`;
             }
           }

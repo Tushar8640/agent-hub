@@ -15,6 +15,10 @@ import { dur, fmtSize, fmtTime, labelFor } from '@/lib/format'
 import { useDialogs } from '@/hooks/use-dialogs'
 import { useHub, useNow } from '@/hooks/use-hub'
 import type { Run } from '@/lib/types'
+import { ImageGallery } from '@/components/image-gallery'
+
+// Must match SAFE_IMAGE_TYPES in hub/index.ts; other attachments stay as name badges.
+const PREVIEWABLE = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp'])
 
 export function RunItem({ run: r }: { run: Run }) {
   const wf = r.workflow
@@ -22,6 +26,9 @@ export function RunItem({ run: r }: { run: Run }) {
   const [showPrompt, setShowPrompt] = useState(false)
   const typed = r.display ?? (wf ? wf.input : r.prompt)
   const files = r.attachments || []
+  const imageFiles = files.filter(f => PREVIEWABLE.has(f.type))
+  const otherFiles = files.filter(f => !PREVIEWABLE.has(f.type))
+  const agentImages = r.images || []
   const took = r.startedAt && r.endedAt ? dur(r.endedAt - r.startedAt) : ''
   const cost = r.costUsd != null ? `USD ${r.costUsd.toFixed(3)}` : ''
 
@@ -51,9 +58,12 @@ export function RunItem({ run: r }: { run: Run }) {
               </div>
             </div>
           )}
-          {files.length > 0 && (
+          {imageFiles.length > 0 && (
+            <ImageGallery align="end" images={imageFiles.map(f => ({ key: f.id, src: `/api/uploads/${f.id}`, name: f.name }))} />
+          )}
+          {otherFiles.length > 0 && (
             <div className="flex flex-wrap justify-end gap-1.5">
-              {files.map(f => (
+              {otherFiles.map(f => (
                 <Badge key={f.id} variant="outline" className="h-auto max-w-64 gap-1.5 py-1 bg-muted/40">
                   <FileText className="size-3.5" /> <span className="truncate">{f.name}</span> <span className="text-muted-foreground">{fmtSize(f.size)}</span>
                 </Badge>
@@ -76,6 +86,14 @@ export function RunItem({ run: r }: { run: Run }) {
           <AgentAvatar id={r.agentId} name={r.agentName} size="sm" className="mt-0.5 shrink-0" />
           <AgentBubble run={r} />
         </div>
+      )}
+
+      {/* Images the agent looked at (e.g. screenshots it read), shown live while it works */}
+      {agentImages.length > 0 && (
+        <ImageGallery
+          className="pl-9.5"
+          images={agentImages.map(img => ({ key: img.id, src: `/api/runs/${r.id}/images/${img.id}`, name: img.name }))}
+        />
       )}
 
       {r.status !== 'awaiting' && (

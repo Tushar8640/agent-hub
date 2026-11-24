@@ -133,7 +133,7 @@ const claudeCode: AdapterFactory = cfg => {
       }
       return this.models || [];
     },
-    start({ prompt, cwd, sessionId, model: runModel, onActivity, onSession, onUsage, overrides, extraDirs, skipPermissions }: StartOptions) {
+    start({ prompt, cwd, sessionId, model: runModel, onActivity, onSession, onUsage, onImage, overrides, extraDirs, skipPermissions }: StartOptions) {
       // A workflow step may tighten permissions (e.g. read-only planning). It can never loosen them:
       // step tools are limited to the agent's own allowedTools.
       const stepMode = overrides?.permissionMode && MODES.has(overrides.permissionMode) ? overrides.permissionMode : mode;
@@ -161,6 +161,7 @@ const claudeCode: AdapterFactory = cfg => {
       let currentSession = sessionId;
       let resolvedModelId: string | null = null;
       let reportedModel = false;
+      const toolFiles = new Map<string, string>(); // tool_use id -> file it read, to name images
 
       readline.createInterface({ input: child.stdout }).on('line', line => {
         let o: Json;
@@ -186,8 +187,23 @@ const claudeCode: AdapterFactory = cfg => {
             if (b.type === 'text' && typeof b.text === 'string' && b.text.trim()) onActivity('💬', b.text);
             else if (b.type === 'tool_use') {
               const i = b.input || {};
+              if (typeof b.id === 'string' && typeof i.file_path === 'string') toolFiles.set(b.id, i.file_path);
               const target = i.file_path || i.command || i.pattern || i.path || i.description || '';
               onActivity('🔧', `${b.name}${target ? ': ' + target : ''}`);
+            }
+          }
+        } else if (o.type === 'user' && onImage && Array.isArray(o.message?.content)) {
+          // Tool results come back as user messages; reading an image file returns base64 image blocks.
+          for (const b of o.message.content) {
+            if (b?.type !== 'tool_result' || !Array.isArray(b.content)) continue;
+            const file = toolFiles.get(b.tool_use_id);
+            for (const c of b.content) {
+              if (c?.type !== 'image' || c.source?.type !== 'base64' || typeof c.source.data !== 'string') continue;
+              onImage({
+                name: file ? path.basename(file) : 'image',
+                type: String(c.source.media_type || ''),
+                data: Buffer.from(c.source.data, 'base64'),
+              });
             }
           }
         } else if (o.type === 'rate_limit_event' && o.rate_limit_info && typeof o.rate_limit_info === 'object') {
