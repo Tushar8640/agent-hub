@@ -10,6 +10,13 @@ const FILE = path.join(DIR, 'state.json');
 export const UPLOAD_DIR = path.join(DIR, 'uploads');
 export const DIFF_DIR = path.join(DIR, 'diffs');
 export const BRANCH_DIR = path.join(DIR, 'branches');
+export const IMAGE_DIR = path.join(DIR, 'run-images');
+
+// Deletes the files a run keeps on disk (saved diff, images it looked at).
+export function removeRunFiles(r: Run): void {
+  if (r.changes?.patchFile) fs.rm(r.changes.patchFile, { force: true }, () => {});
+  for (const img of r.images || []) fs.rm(img.path, { force: true }, () => {});
+}
 const KEEP_RUNS = 2000;
 const UNUSED_UPLOAD_MS = 24 * 60 * 60 * 1000; // uploads never sent in a message are removed after a day
 
@@ -85,14 +92,18 @@ export function changed(): void {
 
 function prune(): void {
   const chatIds = new Set(db.chats.map(c => c.id));
-  db.runs = db.runs.filter(r => chatIds.has(r.chatId));
+  db.runs = db.runs.filter(r => {
+    if (chatIds.has(r.chatId)) return true;
+    removeRunFiles(r);
+    return false;
+  });
   let extra = db.runs.length - KEEP_RUNS;
   if (extra > 0) {
     db.runs = db.runs.filter(r => {
       const keep = r.status === 'running' || r.status === 'queued' || r.status === 'awaiting';
       if (extra > 0 && !keep) {
         extra--;
-        if (r.changes?.patchFile) fs.rm(r.changes.patchFile, { force: true }, () => {});
+        removeRunFiles(r);
         return false;
       }
       return true;

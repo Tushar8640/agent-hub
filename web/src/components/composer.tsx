@@ -194,6 +194,8 @@ export function Composer({
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 align="start"
+                side="top"
+                collisionPadding={16}
                 className="flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0"
               >
                 <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-3 py-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">

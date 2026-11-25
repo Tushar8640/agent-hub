@@ -5,6 +5,7 @@ export type RunStatus = 'queued' | 'awaiting' | 'running' | 'done' | 'error' | '
 export interface Activity { at: number; icon: string; text: string }
 export interface RunWorkflow { id: string; step: number; steps: number; label: string; input: string }
 export interface FileInfo { id: string; name: string; size: number; type: string }
+export interface RunImage { id: string; name: string; type: string; size: number; at: number }
 export interface ChangedFile { path: string; status: string; added: number | null; removed: number | null }
 export interface RunChanges {
   mode: 'branch' | 'direct'; files: ChangedFile[]; commit: string | null; truncated: boolean
@@ -17,6 +18,7 @@ export interface Run {
   createdAt: number; startedAt: number | null; endedAt: number | null
   result: string | null; error: string | null; costUsd: number | null
   activity: Activity[]; handoff?: string; changes: RunChanges | null
+  images?: RunImage[]
   model?: string | null
   resolvedModel?: string | null
 }
