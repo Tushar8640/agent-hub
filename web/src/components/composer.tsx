@@ -5,6 +5,7 @@ import { Check, ChevronDown, Cpu, FileText, Loader2, Paperclip, RefreshCw, SendH
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -191,8 +192,11 @@ export function Composer({
                   <ChevronDown className="size-3 opacity-60" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64 max-w-[calc(100vw-2rem)]">
-                <div className="flex items-center justify-between px-2 py-1 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+              <DropdownMenuContent
+                align="start"
+                className="flex w-72 max-w-[calc(100vw-2rem)] flex-col overflow-hidden p-0"
+              >
+                <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-3 py-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
                   <span>Available Models</span>
                   {agentId && (
                     <button
@@ -206,22 +210,29 @@ export function Composer({
                     </button>
                   )}
                 </div>
-                {models.map(m => {
-                  const isSelected = activeModel?.id === m.id
-                  return (
-                    <DropdownMenuItem
-                      key={m.id}
-                      className="flex cursor-pointer items-start justify-between gap-2 py-1.5 text-xs"
-                      onSelect={() => onModelChange?.(m.id)}
-                    >
-                      <div className="flex min-w-0 flex-col gap-0.5">
-                        <span className={cn('truncate', isSelected && 'font-semibold text-sky-400')}>{m.label}</span>
-                        {m.description && <span className="text-[10px] text-muted-foreground">{m.description}</span>}
-                      </div>
-                      {isSelected && <Check className="mt-0.5 size-3.5 shrink-0 text-sky-400" />}
-                    </DropdownMenuItem>
-                  )
-                })}
+                <ScrollArea
+                  className="min-h-0 flex-1"
+                  viewportClassName="max-h-[min(320px,50vh,calc(var(--radix-dropdown-menu-content-available-height,320px)_-_2.5rem))]"
+                >
+                  <div className="p-1">
+                    {models.map(m => {
+                      const isSelected = activeModel?.id === m.id
+                      return (
+                        <DropdownMenuItem
+                          key={m.id}
+                          className="flex cursor-pointer items-start justify-between gap-2 px-2 py-1.5 text-xs"
+                          onSelect={() => onModelChange?.(m.id)}
+                        >
+                          <div className="flex min-w-0 flex-col gap-0.5">
+                            <span className={cn('truncate', isSelected && 'font-semibold text-sky-400')}>{m.label}</span>
+                            {m.description && <span className="truncate text-[10px] text-muted-foreground">{m.description}</span>}
+                          </div>
+                          {isSelected && <Check className="mt-0.5 size-3.5 shrink-0 text-sky-400" />}
+                        </DropdownMenuItem>
+                      )
+                    })}
+                  </div>
+                </ScrollArea>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
